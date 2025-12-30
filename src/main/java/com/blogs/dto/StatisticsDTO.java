@@ -8,11 +8,14 @@ import lombok.Data;
 @Data
 public class StatisticsDTO {
     private Long totalArticles;
-    private Long publishedArticles;
-    private Long draftArticles;
+    private Long totalPosts;
+    private Long totalUsers;
+    private Long totalComments;
+    private Long totalPostComments;
     private Long totalViews;
     private Long totalLikes;
-    private Long totalComments;
+    private Long publishedArticles;
+    private Long draftArticles;
     private Long pendingComments;
     private Long totalCategories;
     private Long totalTags;

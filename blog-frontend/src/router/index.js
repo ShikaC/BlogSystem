@@ -8,17 +8,30 @@ const routes = [
     component: () => import('@/layouts/FrontLayout.vue'),
     children: [
       { path: '', name: 'Home', component: () => import('@/views/front/Home.vue') },
+      { path: 'forum', name: 'Forum', component: () => import('@/views/front/Forum.vue') },
+      { path: 'forum/post/:id', name: 'PostDetail', component: () => import('@/views/front/PostDetail.vue') },
       { path: 'article/:id', name: 'Article', component: () => import('@/views/front/Article.vue') },
       { path: 'category/:id', name: 'Category', component: () => import('@/views/front/Category.vue') },
       { path: 'tag/:id', name: 'Tag', component: () => import('@/views/front/Tag.vue') },
       { path: 'archives', name: 'Archives', component: () => import('@/views/front/Archives.vue') },
       { path: 'search', name: 'Search', component: () => import('@/views/front/Search.vue') },
       { path: 'about', name: 'About', component: () => import('@/views/front/About.vue') },
-      { path: 'links', name: 'Links', component: () => import('@/views/front/Links.vue') }
+      { path: 'links', name: 'Links', component: () => import('@/views/front/Links.vue') },
+      // 用户中心
+      { 
+        path: 'user', 
+        meta: { requiresAuth: true },
+        children: [
+          { path: 'profile', name: 'UserProfile', component: () => import('@/views/front/UserCenter.vue') },
+          { path: 'article/edit/:id?', name: 'UserArticleEdit', component: () => import('@/views/admin/ArticleEdit.vue') },
+          { path: 'post/edit/:id?', name: 'UserPostEdit', component: () => import('@/views/front/Forum.vue') } // 暂定
+        ]
+      }
     ]
   },
-  // 登录页
+  // 登录/注册页
   { path: '/login', name: 'Login', component: () => import('@/views/Login.vue') },
+  { path: '/register', name: 'Register', component: () => import('@/views/Login.vue') },
   // 后台路由
   {
     path: '/admin',
@@ -58,10 +71,15 @@ router.beforeEach((to, from, next) => {
   const userStore = useUserStore()
   
   if (to.matched.some(record => record.meta.requiresAuth)) {
-    if (!userStore.isLoggedIn()) {
+    if (!userStore.isLoggedIn) {
       next({ name: 'Login', query: { redirect: to.fullPath } })
     } else {
-      next()
+      // 访问后台需要管理员权限
+      if (to.path.startsWith('/admin') && !userStore.isAdmin) {
+        next({ name: 'Home' })
+      } else {
+        next()
+      }
     }
   } else {
     next()

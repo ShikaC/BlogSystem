@@ -1,0 +1,50 @@
+package com.blogs.controller.front;
+
+import com.blogs.common.PageResult;
+import com.blogs.common.Result;
+import com.blogs.entity.ForumPost;
+import com.blogs.entity.ForumSection;
+import com.blogs.service.ForumService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+/**
+ * 前台论坛展示控制器
+ */
+@RestController
+@RequestMapping("/front/forum")
+public class ForumController {
+
+    @Autowired
+    private ForumService forumService;
+
+    /**
+     * 获取所有板块
+     */
+    @GetMapping("/sections")
+    public Result<List<ForumSection>> getSections() {
+        return Result.success(forumService.getAllSections());
+    }
+
+    /**
+     * 获取板块下的帖子列表
+     */
+    @GetMapping("/posts")
+    public Result<PageResult<ForumPost>> getPosts(
+            @RequestParam Long sectionId,
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer size) {
+        return Result.success(forumService.getPostList(sectionId, page, size));
+    }
+
+    /**
+     * 获取帖子详情
+     */
+    @GetMapping("/posts/{id}")
+    public Result<ForumPost> getPost(@PathVariable Long id) {
+        return Result.success(forumService.getPost(id));
+    }
+}
+

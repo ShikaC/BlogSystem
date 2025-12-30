@@ -26,6 +26,10 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
     
     // 全状态查询（后台管理）
     Page<Article> findAllByOrderByCreatedAtDesc(Pageable pageable);
+
+    // 根据用户查询
+    Page<Article> findByUser_UsernameOrderByCreatedAtDesc(String username, Pageable pageable);
+    Page<Article> findByUser_IdOrderByCreatedAtDesc(Long userId, Pageable pageable);
     
     // 搜索
     @Query("SELECT a FROM Article a WHERE a.status = 1 AND (a.title LIKE %:keyword% OR a.content LIKE %:keyword%)")

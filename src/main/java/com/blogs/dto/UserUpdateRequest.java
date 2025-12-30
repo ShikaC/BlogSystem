@@ -3,10 +3,10 @@ package com.blogs.dto;
 import lombok.Data;
 
 /**
- * 博主信息更新请求
+ * 用户信息更新请求
  */
 @Data
-public class BloggerUpdateRequest {
+public class UserUpdateRequest {
     private String nickname;
     private String avatar;
     private String bio;

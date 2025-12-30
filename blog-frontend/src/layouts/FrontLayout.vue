@@ -8,19 +8,40 @@
         </div>
         <nav class="nav">
           <router-link to="/" class="nav-item">首页</router-link>
+          <router-link to="/forum" class="nav-item">论坛</router-link>
           <router-link to="/archives" class="nav-item">归档</router-link>
           <router-link to="/about" class="nav-item">关于</router-link>
-          <router-link to="/links" class="nav-item">友链</router-link>
         </nav>
         <div class="header-right">
           <el-input
             v-model="searchKeyword"
-            placeholder="搜索文章..."
+            placeholder="搜索文章/帖子..."
             class="search-input"
             @keyup.enter="handleSearch"
             :prefix-icon="Search"
           />
           <el-button :icon="themeStore.isDark ? Sunny : Moon" circle @click="themeStore.toggleTheme" />
+          
+          <template v-if="userStore.isLoggedIn">
+            <el-dropdown @command="handleUserCommand">
+              <span class="user-info">
+                <el-avatar :size="32" :src="userStore.userInfo.avatar" />
+                <span class="nickname">{{ userStore.userInfo.nickname }}</span>
+              </span>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item command="profile">个人中心</el-dropdown-item>
+                  <el-dropdown-item command="article">发布文章</el-dropdown-item>
+                  <el-dropdown-item command="post">发布帖子</el-dropdown-item>
+                  <el-dropdown-item v-if="userStore.isAdmin" command="admin">系统后台</el-dropdown-item>
+                  <el-dropdown-item divided command="logout">退出登录</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </template>
+          <template v-else>
+            <el-button type="primary" link @click="router.push('/login')">登录</el-button>
+          </template>
         </div>
         <el-button class="mobile-menu-btn" :icon="Menu" @click="showMobileMenu = true" />
       </div>
@@ -66,11 +87,14 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useThemeStore } from '@/stores/theme'
+import { useUserStore } from '@/stores/user'
 import { getFrontConfig } from '@/api/front'
 import { Search, Sunny, Moon, Menu } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 
 const router = useRouter()
 const themeStore = useThemeStore()
+const userStore = useUserStore()
 
 const searchKeyword = ref('')
 const showMobileMenu = ref(false)
@@ -82,6 +106,22 @@ const handleSearch = () => {
   if (searchKeyword.value.trim()) {
     router.push({ name: 'Search', query: { q: searchKeyword.value } })
     showMobileMenu.value = false
+  }
+}
+
+const handleUserCommand = (command) => {
+  if (command === 'logout') {
+    userStore.logout()
+    ElMessage.success('已退出登录')
+    router.push('/')
+  } else if (command === 'profile') {
+    router.push('/user/profile')
+  } else if (command === 'article') {
+    router.push('/user/article/edit')
+  } else if (command === 'post') {
+    router.push('/user/post/edit')
+  } else if (command === 'admin') {
+    router.push('/admin')
   }
 }
 
@@ -172,6 +212,23 @@ onMounted(async () => {
 
 .search-input {
   width: 200px;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 0 10px;
+}
+
+.nickname {
+  font-size: 14px;
+  color: #666;
+}
+
+.dark .nickname {
+  color: #aaa;
 }
 
 .mobile-menu-btn {

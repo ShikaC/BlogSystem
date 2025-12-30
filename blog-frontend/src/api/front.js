@@ -32,6 +32,26 @@ export const getLatestComments = () => request.get('/front/comments/latest')
 export const createComment = (data) => request.post('/front/comments', data)
 
 // 其他
-export const getBloggerInfo = () => request.get('/front/blogger')
+export const getAdminInfo = () => request.get('/front/admin-info')
+// 兼容旧代码：历史页面仍调用 getBloggerInfo（实际返回站点管理员信息）
+export const getBloggerInfo = () => request.get('/front/admin-info')
 export const getFriendLinks = () => request.get('/front/friend-links')
 export const getFrontConfig = () => request.get('/front/config')
+
+// 论坛相关
+export const getForumSections = () => request.get('/front/forum/sections')
+export const getForumPosts = (params) => request.get('/front/forum/posts', { params })
+export const getForumPostDetail = (id) => request.get(`/front/forum/posts/${id}`)
+
+// 个人中心 (需要登录)
+export const getUserProfile = () => request.get('/front/user/profile')
+export const getMyArticles = (params) => request.get('/front/user/articles', { params })
+export const getMyPosts = (params) => request.get('/front/user/posts', { params })
+export const getMyNotifications = (params) => request.get('/front/user/notifications', { params })
+
+// 用户互动 (需要登录)
+export const savePost = (data) => request.post('/front/user/forum/posts', data)
+export const deletePost = (id) => request.delete(`/front/user/forum/posts/${id}`)
+export const createPostComment = (data) => request.post('/front/user/forum/comments', data)
+export const likePost = (id) => request.post(`/front/user/forum/posts/${id}/like`)
+export const collectPost = (id) => request.post(`/front/user/forum/posts/${id}/collect`)

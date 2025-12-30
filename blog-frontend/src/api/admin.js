@@ -35,10 +35,17 @@ export const createFriendLink = (params) => request.post('/admin/friend-links', 
 export const updateFriendLink = (id, params) => request.put(`/admin/friend-links/${id}`, null, { params })
 export const deleteFriendLink = (id) => request.delete(`/admin/friend-links/${id}`)
 
-// 博主信息
-export const getBloggerInfo = () => request.get('/admin/blogger')
-export const updateBloggerInfo = (data) => request.put('/admin/blogger', data)
-export const updatePassword = (data) => request.put('/admin/blogger/password', data)
+// 用户管理
+export const getAllUsers = () => request.get('/admin/users')
+export const updateUserStatus = (id, status) => request.put(`/admin/users/${id}/status`, null, { params: { status } })
+export const getCurrentAdmin = () => request.get('/admin/users/current')
+export const updateAdminProfile = (data) => request.put('/admin/users/profile', data)
+export const updateAdminPassword = (data) => request.put('/admin/users/password', data)
+
+// 兼容旧后台页面：Profile.vue 仍使用 “博主信息” 接口名
+export const getBloggerInfo = () => getCurrentAdmin()
+export const updateBloggerInfo = (data) => updateAdminProfile(data)
+export const updatePassword = (data) => updateAdminPassword(data)
 
 // 媒体库
 export const uploadFile = (file, category) => {

@@ -9,6 +9,7 @@ import com.blogs.service.CommentService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -30,6 +31,12 @@ public class FrontCommentController {
     @PostMapping
     public Result<CommentVO> createComment(@Valid @RequestBody CommentRequest request,
                                            HttpServletRequest httpRequest) {
+        // 获取当前用户
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        if ("anonymousUser".equals(username)) {
+            throw new BusinessException("请先登录再发表评论");
+        }
+        
         // 验证码验证
         if (request.getCaptchaKey() != null && request.getCaptcha() != null) {
             if (!captchaService.verifyCaptcha(request.getCaptchaKey(), request.getCaptcha())) {
@@ -38,7 +45,7 @@ public class FrontCommentController {
         }
         
         String ipAddress = getClientIp(httpRequest);
-        CommentVO comment = commentService.createComment(request, ipAddress);
+        CommentVO comment = commentService.createComment(request, username, ipAddress);
         return Result.success(comment);
     }
     

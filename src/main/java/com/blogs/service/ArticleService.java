@@ -5,11 +5,9 @@ import com.blogs.dto.*;
 import com.blogs.entity.Article;
 import com.blogs.entity.Category;
 import com.blogs.entity.Tag;
+import com.blogs.entity.User;
 import com.blogs.exception.BusinessException;
-import com.blogs.repository.ArticleRepository;
-import com.blogs.repository.CategoryRepository;
-import com.blogs.repository.CommentRepository;
-import com.blogs.repository.TagRepository;
+import com.blogs.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -43,18 +41,29 @@ public class ArticleService {
     @Autowired
     private CommentRepository commentRepository;
     
+    @Autowired
+    private UserRepository userRepository;
+
     /**
      * 保存文章（新增/编辑）
      */
-    public Article saveArticle(ArticleRequest request) {
+    public Article saveArticle(ArticleRequest request, String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new BusinessException("用户不存在"));
+        
         Article article;
         boolean isNew = request.getId() == null;
         
         if (isNew) {
             article = new Article();
+            article.setUser(user);
         } else {
             article = articleRepository.findById(request.getId())
                     .orElseThrow(() -> new BusinessException("文章不存在"));
+            // 权限校验：管理员可以修改任何文章，普通用户只能修改自己的
+            if (!"ADMIN".equals(user.getRole()) && !article.getUser().getId().equals(user.getId())) {
+                throw new BusinessException("无权修改他人文章");
+            }
         }
         
         article.setTitle(request.getTitle());
@@ -340,6 +349,20 @@ public class ArticleService {
         return PageResult.of(list, articlePage.getTotalElements(), page, size);
     }
     
+    /**
+     * 获取指定用户的文章列表 (个人中心)
+     */
+    public PageResult<ArticleVO> getUserArticleList(String username, Integer page, Integer size) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+        Page<Article> articlePage = articleRepository.findByUser_UsernameOrderByCreatedAtDesc(username, pageable);
+        
+        List<ArticleVO> list = articlePage.getContent().stream()
+                .map(ArticleVO::fromEntityWithoutContent)
+                .collect(Collectors.toList());
+        
+        return PageResult.of(list, articlePage.getTotalElements(), page, size);
+    }
+
     /**
      * 增加阅读量
      */

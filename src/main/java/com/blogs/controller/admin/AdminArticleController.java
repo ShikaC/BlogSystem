@@ -8,6 +8,7 @@ import com.blogs.entity.Article;
 import com.blogs.service.ArticleService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -48,7 +49,8 @@ public class AdminArticleController {
      */
     @PostMapping
     public Result<ArticleVO> saveArticle(@Valid @RequestBody ArticleRequest request) {
-        Article article = articleService.saveArticle(request);
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        Article article = articleService.saveArticle(request, username);
         return Result.success(ArticleVO.fromEntity(article));
     }
     

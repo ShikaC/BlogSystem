@@ -8,12 +8,12 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 
 /**
- * 博主实体类 - 单博主模式
+ * 用户实体类 - 支持多用户角色
  */
 @Data
 @Entity
-@Table(name = "blogger")
-public class Blogger {
+@Table(name = "users")
+public class User {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -36,6 +36,18 @@ public class Blogger {
     
     @Column(length = 100)
     private String email;
+
+    /**
+     * 角色：ADMIN-超级管理员 USER-注册用户
+     */
+    @Column(nullable = false, length = 20)
+    private String role;
+
+    /**
+     * 状态：0-禁用 1-启用
+     */
+    @Column(nullable = false)
+    private Integer status = 1;
     
     @Column(length = 100)
     private String github;

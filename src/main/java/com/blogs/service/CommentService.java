@@ -4,17 +4,17 @@ import com.blogs.common.PageResult;
 import com.blogs.dto.CommentRequest;
 import com.blogs.dto.CommentVO;
 import com.blogs.entity.Comment;
+import com.blogs.entity.User;
 import com.blogs.exception.BusinessException;
 import com.blogs.repository.ArticleRepository;
 import com.blogs.repository.CommentRepository;
-import cn.hutool.crypto.digest.DigestUtil;
+import com.blogs.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -32,25 +32,27 @@ public class CommentService {
     @Autowired
     private ArticleRepository articleRepository;
     
+    @Autowired
+    private UserRepository userRepository;
+
     /**
-     * 访客发表评论
+     * 发表评论 (需要登录)
      */
-    public CommentVO createComment(CommentRequest request, String ipAddress) {
+    public CommentVO createComment(CommentRequest request, String username, String ipAddress) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new BusinessException("用户不存在"));
+        
         Comment comment = new Comment();
         comment.setArticleId(request.getArticleId());
+        comment.setUser(user);
         comment.setContent(request.getContent());
-        comment.setNickname(StringUtils.hasText(request.getNickname()) ? request.getNickname() : "匿名访客");
-        comment.setEmail(request.getEmail());
-        comment.setWebsite(request.getWebsite());
         comment.setIpAddress(ipAddress);
-        comment.setIsBlogger(false);
-        comment.setStatus(1); // 默认通过
+        comment.setIsBlogger("ADMIN".equals(user.getRole()));
+        comment.setStatus(1); // 默认通过，实际可根据配置开启审核
         
-        // Gravatar头像
-        if (StringUtils.hasText(request.getEmail())) {
-            String hash = DigestUtil.md5Hex(request.getEmail().toLowerCase().trim());
-            comment.setAvatar("https://www.gravatar.com/avatar/" + hash + "?d=mp");
-        }
+        // 兼容原有的昵称和头像 (从用户信息中获取)
+        comment.setNickname(user.getNickname());
+        comment.setAvatar(user.getAvatar());
         
         // 处理回复
         if (request.getParentId() != null) {

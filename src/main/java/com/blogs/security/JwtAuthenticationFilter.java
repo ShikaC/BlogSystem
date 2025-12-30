@@ -1,7 +1,7 @@
 package com.blogs.security;
 
-import com.blogs.entity.Blogger;
-import com.blogs.repository.BloggerRepository;
+import com.blogs.entity.User;
+import com.blogs.repository.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -29,7 +29,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private JwtUtils jwtUtils;
     
     @Autowired
-    private BloggerRepository bloggerRepository;
+    private UserRepository userRepository;
     
     @Value("${jwt.header}")
     private String header;
@@ -49,14 +49,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 String username = jwtUtils.getUsernameFromToken(token);
                 
                 if (username != null) {
-                    Optional<Blogger> bloggerOpt = bloggerRepository.findByUsername(username);
+                    Optional<User> userOpt = userRepository.findByUsername(username);
                     
-                    if (bloggerOpt.isPresent()) {
+                    if (userOpt.isPresent()) {
+                        User user = userOpt.get();
                         UsernamePasswordAuthenticationToken authentication = 
                             new UsernamePasswordAuthenticationToken(
-                                bloggerOpt.get(),
+                                user.getUsername(),
                                 null,
-                                Collections.singletonList(new SimpleGrantedAuthority("ROLE_BLOGGER"))
+                                Collections.singletonList(new SimpleGrantedAuthority(user.getRole()))
                             );
                         SecurityContextHolder.getContext().setAuthentication(authentication);
                     }

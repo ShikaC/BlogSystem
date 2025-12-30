@@ -1,13 +1,13 @@
 package com.blogs.dto;
 
-import com.blogs.entity.Article;
-import com.blogs.entity.Category;
-import com.blogs.entity.Tag;
-import lombok.Data;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import com.blogs.entity.Article;
+import com.blogs.entity.Category;
+
+import lombok.Data;
 
 /**
  * 文章响应DTO
@@ -15,6 +15,9 @@ import java.util.stream.Collectors;
 @Data
 public class ArticleVO {
     private Long id;
+    private Long userId;
+    private String authorNickname;
+    private String authorAvatar;
     private String title;
     private String content;
     private String summary;
@@ -46,6 +49,11 @@ public class ArticleVO {
     public static ArticleVO fromEntity(Article article) {
         ArticleVO vo = new ArticleVO();
         vo.setId(article.getId());
+        if (article.getUser() != null) {
+            vo.setUserId(article.getUser().getId());
+            vo.setAuthorNickname(article.getUser().getNickname());
+            vo.setAuthorAvatar(article.getUser().getAvatar());
+        }
         vo.setTitle(article.getTitle());
         vo.setContent(article.getContent());
         vo.setSummary(article.getSummary());

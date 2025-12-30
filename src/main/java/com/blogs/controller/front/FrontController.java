@@ -4,7 +4,7 @@ import com.blogs.common.PageResult;
 import com.blogs.common.Result;
 import com.blogs.dto.ArchiveDTO;
 import com.blogs.dto.ArticleVO;
-import com.blogs.dto.BloggerDTO;
+import com.blogs.dto.UserDTO;
 import com.blogs.dto.CommentVO;
 import com.blogs.entity.Category;
 import com.blogs.entity.FriendLink;
@@ -39,7 +39,7 @@ public class FrontController {
     private FriendLinkService friendLinkService;
     
     @Autowired
-    private BloggerService bloggerService;
+    private UserService userService;
     
     @Autowired
     private SiteConfigService siteConfigService;
@@ -254,12 +254,17 @@ public class FrontController {
     // ==================== 其他 ====================
     
     /**
-     * 获取博主信息
+     * 获取管理员信息 (原博主信息)
      */
-    @GetMapping("/blogger")
-    public Result<BloggerDTO> getBloggerInfo() {
-        BloggerDTO dto = bloggerService.getBloggerInfo();
-        return Result.success(dto);
+    @GetMapping("/admin-info")
+    public Result<UserDTO> getAdminInfo() {
+        // 假设第一个管理员是站点所有者
+        List<UserDTO> users = userService.getAllUsers();
+        UserDTO admin = users.stream()
+                .filter(u -> "ADMIN".equals(u.getRole()))
+                .findFirst()
+                .orElse(null);
+        return Result.success(admin);
     }
     
     /**

@@ -31,6 +31,10 @@ public class CategoryService {
         category.setName(name);
         category.setDescription(description);
         category.setParentId(parentId);
+        // 统一分类表：默认创建博客分类（CATEGORY）
+        if (category.getType() == null || category.getType().isBlank()) {
+            category.setType("CATEGORY");
+        }
         
         return categoryRepository.save(category);
     }

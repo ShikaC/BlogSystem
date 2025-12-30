@@ -8,6 +8,10 @@ import java.time.LocalDateTime;
 
 /**
  * 评论实体类
+ *
+ * 统一设计：
+ * - targetId + targetType 绑定任意内容（ARTICLE / FORUM_POST）
+ * - 保留 article_id 作为历史兼容字段（数据库字段不删除，旧数据可读）
  */
 @Data
 @Entity
@@ -17,9 +21,27 @@ public class Comment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
-    @Column(name = "article_id", nullable = false)
-    private Long articleId;
+
+    /**
+     * 历史兼容字段：旧版本只支持文章评论（article_id）
+     * - 新版本统一使用 targetId/targetType
+     * - 读取旧数据时，如果 targetType 为空，则默认视为 ARTICLE
+     */
+    @Deprecated
+    @Column(name = "article_id")
+    private Long legacyArticleId;
+
+    /**
+     * 统一目标ID：文章ID / 帖子ID
+     */
+    @Column(name = "target_id")
+    private Long targetId;
+
+    /**
+     * 统一目标类型：ARTICLE / FORUM_POST
+     */
+    @Column(name = "target_type", length = 20)
+    private String targetType;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -67,4 +89,15 @@ public class Comment {
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    /**
+     * 兼容旧字段：前端/VO 仍可能使用 articleId
+     */
+    @Transient
+    public Long getArticleId() {
+        if ("ARTICLE".equalsIgnoreCase(targetType)) {
+            return targetId;
+        }
+        return legacyArticleId;
+    }
 }

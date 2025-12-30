@@ -32,7 +32,19 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
     Page<Article> findByUser_IdOrderByCreatedAtDesc(Long userId, Pageable pageable);
     
     // 搜索
-    @Query("SELECT a FROM Article a WHERE a.status = 1 AND (a.title LIKE %:keyword% OR a.content LIKE %:keyword%)")
+    @Query("""
+            SELECT DISTINCT a FROM Article a
+            LEFT JOIN a.tags t
+            LEFT JOIN a.user u
+            WHERE a.status = 1 AND (
+                   a.title LIKE %:keyword%
+                OR a.content LIKE %:keyword%
+                OR a.summary LIKE %:keyword%
+                OR t.name LIKE %:keyword%
+                OR u.username LIKE %:keyword%
+                OR u.nickname LIKE %:keyword%
+            )
+            """)
     Page<Article> searchByKeyword(String keyword, Pageable pageable);
     
     // 统计

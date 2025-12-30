@@ -20,6 +20,16 @@ public class Category {
     
     @Column(nullable = false, length = 50)
     private String name;
+
+    /**
+     * 分类类型：
+     * - CATEGORY：博客分类
+     * - SECTION：论坛版块
+     *
+     * 说明：为保证增量兼容，历史数据可能为 null，业务层应默认视为 CATEGORY。
+     */
+    @Column(length = 20)
+    private String type = "CATEGORY";
     
     @Column(length = 200)
     private String description;

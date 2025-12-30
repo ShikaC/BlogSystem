@@ -2,8 +2,7 @@ package com.blogs.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
+import lombok.EqualsAndHashCode;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -13,50 +12,20 @@ import java.util.Set;
  * 文章实体类
  */
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = "article")
-public class Article {
-    
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    
+public class Article extends BaseContent {
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id", nullable = false, insertable = false, updatable = false)
     private User user;
-    
-    @Column(nullable = false, length = 200)
-    private String title;
-    
-    @Column(columnDefinition = "LONGTEXT")
-    private String content;
     
     @Column(length = 500)
     private String summary;
     
     @Column(name = "cover_image", length = 500)
     private String coverImage;
-    
-    /**
-     * 文章状态：0-草稿 1-已发布 2-私密 3-回收站
-     */
-    @Column(nullable = false)
-    private Integer status = 0;
-    
-    @Column(name = "is_top")
-    private Boolean isTop = false;
-    
-    @Column(name = "view_count")
-    private Long viewCount = 0L;
-    
-    @Column(name = "like_count")
-    private Long likeCount = 0L;
-    
-    @Column(name = "collect_count")
-    private Long collectCount = 0L;
-    
-    @Column(name = "comment_count")
-    private Long commentCount = 0L;
     
     @Column(name = "word_count")
     private Integer wordCount = 0;
@@ -87,14 +56,14 @@ public class Article {
     )
     private Set<Tag> tags = new HashSet<>();
     
-    @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
-    
-    @UpdateTimestamp
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-    
     @Column(name = "published_at")
     private LocalDateTime publishedAt;
+
+    /**
+     * 兼容字段：直接拿到分类ID（不改变原有 Category 关联用法）
+     */
+    @Transient
+    public Long getCategoryId() {
+        return category != null ? category.getId() : null;
+    }
 }

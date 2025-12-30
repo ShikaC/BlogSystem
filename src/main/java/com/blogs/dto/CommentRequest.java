@@ -1,7 +1,6 @@
 package com.blogs.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
@@ -11,8 +10,21 @@ import lombok.Data;
 @Data
 public class CommentRequest {
     
-    @NotNull(message = "文章ID不能为空")
+    /**
+     * 兼容字段：旧接口只传 articleId
+     * 新推荐：targetId + targetType
+     */
     private Long articleId;
+
+    /**
+     * 统一目标ID：文章ID / 帖子ID
+     */
+    private Long targetId;
+
+    /**
+     * 统一目标类型：ARTICLE / FORUM_POST
+     */
+    private String targetType;
     
     @NotBlank(message = "评论内容不能为空")
     @Size(max = 1000, message = "评论内容不能超过1000字")

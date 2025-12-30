@@ -11,6 +11,7 @@ import com.blogs.entity.FriendLink;
 import com.blogs.entity.Tag;
 import com.blogs.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -162,7 +163,12 @@ public class FrontController {
      */
     @PostMapping("/articles/{id}/like")
     public Result<Void> likeArticle(@PathVariable Long id) {
-        articleService.likeArticle(id);
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        if (username != null && !"anonymousUser".equals(username)) {
+            articleService.likeArticle(id, username);
+        } else {
+            articleService.likeArticle(id);
+        }
         return Result.success();
     }
     
@@ -171,7 +177,12 @@ public class FrontController {
      */
     @DeleteMapping("/articles/{id}/like")
     public Result<Void> unlikeArticle(@PathVariable Long id) {
-        articleService.unlikeArticle(id);
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        if (username != null && !"anonymousUser".equals(username)) {
+            articleService.unlikeArticle(id, username);
+        } else {
+            articleService.unlikeArticle(id);
+        }
         return Result.success();
     }
     
@@ -180,7 +191,12 @@ public class FrontController {
      */
     @PostMapping("/articles/{id}/collect")
     public Result<Void> collectArticle(@PathVariable Long id) {
-        articleService.collectArticle(id);
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        if (username != null && !"anonymousUser".equals(username)) {
+            articleService.collectArticle(id, username);
+        } else {
+            articleService.collectArticle(id);
+        }
         return Result.success();
     }
     
@@ -189,7 +205,12 @@ public class FrontController {
      */
     @DeleteMapping("/articles/{id}/collect")
     public Result<Void> uncollectArticle(@PathVariable Long id) {
-        articleService.uncollectArticle(id);
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        if (username != null && !"anonymousUser".equals(username)) {
+            articleService.uncollectArticle(id, username);
+        } else {
+            articleService.uncollectArticle(id);
+        }
         return Result.success();
     }
     

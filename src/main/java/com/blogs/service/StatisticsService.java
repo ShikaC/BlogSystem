@@ -22,9 +22,6 @@ public class StatisticsService {
     
     @Autowired
     private CommentRepository commentRepository;
-
-    @Autowired
-    private ForumPostCommentRepository postCommentRepository;
     
     @Autowired
     private CategoryRepository categoryRepository;
@@ -51,8 +48,9 @@ public class StatisticsService {
         Long totalLikes = articleRepository.sumLikeCount();
         dto.setTotalLikes(totalLikes != null ? totalLikes : 0L);
         
+        // 统一评论/回帖：comment 表既包含文章评论也包含帖子回帖
         dto.setTotalComments(commentRepository.countAll());
-        dto.setTotalPostComments(postCommentRepository.count());
+        dto.setTotalPostComments(commentRepository.countByTargetType("FORUM_POST"));
         dto.setPendingComments(commentRepository.countByStatus(0));
         dto.setTotalCategories(categoryRepository.count());
         dto.setTotalTags(tagRepository.count());

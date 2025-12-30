@@ -1,9 +1,12 @@
 package com.blogs.service;
 
 import com.blogs.common.PageResult;
+import com.blogs.common.NotificationTypes;
 import com.blogs.dto.*;
 import com.blogs.entity.Article;
 import com.blogs.entity.Category;
+import com.blogs.entity.Favorite;
+import com.blogs.entity.LikeRecord;
 import com.blogs.entity.Tag;
 import com.blogs.entity.User;
 import com.blogs.exception.BusinessException;
@@ -44,6 +47,15 @@ public class ArticleService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private LikeRecordRepository likeRecordRepository;
+
+    @Autowired
+    private FavoriteRepository favoriteRepository;
+
+    @Autowired
+    private NotificationService notificationService;
+
     /**
      * 保存文章（新增/编辑）
      */
@@ -56,6 +68,8 @@ public class ArticleService {
         
         if (isNew) {
             article = new Article();
+            // BaseContent 统一字段：以 userId 为落库主字段，同时保留 user 引用用于后续 VO 展示
+            article.setUserId(user.getId());
             article.setUser(user);
         } else {
             article = articleRepository.findById(request.getId())
@@ -63,6 +77,10 @@ public class ArticleService {
             // 权限校验：管理员可以修改任何文章，普通用户只能修改自己的
             if (!"ADMIN".equals(user.getRole()) && !article.getUser().getId().equals(user.getId())) {
                 throw new BusinessException("无权修改他人文章");
+            }
+            // 兜底：历史数据/旧逻辑下可能 userId 未同步，确保一致
+            if (article.getUserId() == null && article.getUser() != null) {
+                article.setUserId(article.getUser().getId());
             }
         }
         
@@ -87,6 +105,11 @@ public class ArticleService {
         if (request.getCategoryId() != null) {
             Category category = categoryRepository.findById(request.getCategoryId())
                     .orElseThrow(() -> new BusinessException("分类不存在"));
+
+            // 统一分类/版块：文章只能绑定博客分类（CATEGORY）；兼容历史 type 为空视为 CATEGORY
+            if (category.getType() != null && !"CATEGORY".equalsIgnoreCase(category.getType())) {
+                throw new BusinessException("文章只能选择博客分类");
+            }
             
             // 更新文章数
             if (isNew || !request.getCategoryId().equals(article.getCategory() != null ? article.getCategory().getId() : null)) {
@@ -186,7 +209,7 @@ public class ArticleService {
         }
         
         // 删除相关评论
-        commentRepository.deleteByArticleId(id);
+        commentRepository.deleteByArticleIdCompatible(id);
         
         articleRepository.delete(article);
     }
@@ -376,11 +399,70 @@ public class ArticleService {
     public void likeArticle(Long id) {
         articleRepository.updateLikeCount(id, 1);
     }
+
+    /**
+     * 点赞（登录用户场景）：在保留原有计数逻辑的基础上补齐通知
+     */
+    public void likeArticle(Long id, String username) {
+        if (username == null || username.isBlank()) {
+            return;
+        }
+        User sender = userRepository.findByUsername(username).orElse(null);
+        if (sender == null) {
+            return;
+        }
+
+        // 用户行为归一：记录点赞（避免重复点赞导致计数异常）
+        if (likeRecordRepository.findByUserIdAndTargetIdAndType(sender.getId(), id, "ARTICLE").isPresent()) {
+            return;
+        }
+        LikeRecord record = new LikeRecord();
+        record.setUserId(sender.getId());
+        record.setTargetId(id);
+        record.setType("ARTICLE");
+        likeRecordRepository.save(record);
+        articleRepository.updateLikeCount(id, 1);
+
+        Article article = articleRepository.findById(id).orElse(null);
+        if (article == null) {
+            return;
+        }
+        Long ownerId = article.getUserId() != null ? article.getUserId() : (article.getUser() != null ? article.getUser().getId() : null);
+        if (ownerId != null && !ownerId.equals(sender.getId())) {
+            notificationService.sendNotification(
+                    ownerId,
+                    sender.getId(),
+                    NotificationTypes.ARTICLE_LIKE,
+                    "你的文章被点赞",
+                    "有人点赞了你的文章",
+                    id,
+                    "ARTICLE"
+            );
+        }
+    }
     
     /**
      * 取消点赞
      */
     public void unlikeArticle(Long id) {
+        articleRepository.updateLikeCount(id, -1);
+    }
+
+    /**
+     * 取消点赞（登录用户场景）：补齐记录删除
+     */
+    public void unlikeArticle(Long id, String username) {
+        if (username == null || username.isBlank()) {
+            return;
+        }
+        User sender = userRepository.findByUsername(username).orElse(null);
+        if (sender == null) {
+            return;
+        }
+        if (likeRecordRepository.findByUserIdAndTargetIdAndType(sender.getId(), id, "ARTICLE").isEmpty()) {
+            return;
+        }
+        likeRecordRepository.deleteByUserIdAndTargetIdAndType(sender.getId(), id, "ARTICLE");
         articleRepository.updateLikeCount(id, -1);
     }
     
@@ -390,11 +472,48 @@ public class ArticleService {
     public void collectArticle(Long id) {
         articleRepository.updateCollectCount(id, 1);
     }
+
+    /**
+     * 收藏（登录用户场景）：记录收藏，避免重复收藏导致计数异常
+     */
+    public void collectArticle(Long id, String username) {
+        if (username == null || username.isBlank()) {
+            return;
+        }
+        User sender = userRepository.findByUsername(username).orElse(null);
+        if (sender == null) {
+            return;
+        }
+        if (favoriteRepository.findByUserIdAndTargetIdAndType(sender.getId(), id, "ARTICLE").isPresent()) {
+            return;
+        }
+        Favorite f = new Favorite();
+        f.setUserId(sender.getId());
+        f.setTargetId(id);
+        f.setType("ARTICLE");
+        favoriteRepository.save(f);
+        articleRepository.updateCollectCount(id, 1);
+    }
     
     /**
      * 取消收藏
      */
     public void uncollectArticle(Long id) {
+        articleRepository.updateCollectCount(id, -1);
+    }
+
+    public void uncollectArticle(Long id, String username) {
+        if (username == null || username.isBlank()) {
+            return;
+        }
+        User sender = userRepository.findByUsername(username).orElse(null);
+        if (sender == null) {
+            return;
+        }
+        if (favoriteRepository.findByUserIdAndTargetIdAndType(sender.getId(), id, "ARTICLE").isEmpty()) {
+            return;
+        }
+        favoriteRepository.deleteByUserIdAndTargetIdAndType(sender.getId(), id, "ARTICLE");
         articleRepository.updateCollectCount(id, -1);
     }
     

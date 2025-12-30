@@ -13,6 +13,8 @@ import java.util.List;
 public class CommentVO {
     private Long id;
     private Long articleId;
+    private Long targetId;
+    private String targetType;
     private String content;
     private String nickname;
     private String email;
@@ -29,6 +31,9 @@ public class CommentVO {
     public static CommentVO fromEntity(Comment comment) {
         CommentVO vo = new CommentVO();
         vo.setId(comment.getId());
+        vo.setTargetId(comment.getTargetId());
+        vo.setTargetType(comment.getTargetType());
+        // 兼容旧字段：文章评论仍可通过 articleId 获取
         vo.setArticleId(comment.getArticleId());
         vo.setContent(comment.getContent());
         vo.setNickname(comment.getNickname());

@@ -1,75 +1,110 @@
-# 博客 + 论坛一体化综合系统 (Blogs & Forum)
+# Blogs - 博客 + 论坛一体化综合系统
 
-基于 SpringBoot 3 + Vue 3 的极简轻量化一体化社区平台。采用「两级角色架构」，全员创作者模式，注册即拥有完整的创作与互动权限。
+这是一个基于 **Spring Boot 3** 和 **Vue 3** 开发的现代博客与论坛一体化系统。它提供了丰富的功能，包括 Markdown 文章发布、分类标签管理、嵌套评论、论坛交流、消息通知、点赞收藏以及完善的后台管理系统。
 
-## 🌟 核心特色
+## 🌟 项目亮点
 
-- **极简两级架构**：仅保留「超级管理员」与「注册用户」两个角色。
-- **全员创作者**：取消创作者申请门槛，用户注册登录后即可发布文章与论坛帖子。
-- **双内容体系**：博客（长内容创作）与论坛（轻量化讨论）独立共存，数据互通联动。
-- **权限清晰安全**：所有接口均做登录态与角色权限双重校验，支持 MD5/Bcrypt 密码加密。
-- **极致移动端适配**：响应式设计，适配手机、平板及电脑全端。
+- **一体化体验**：深度整合博客系统与论坛社区，数据互通，体验顺滑。
+- **现代化技术栈**：后端采用 Spring Boot 3.5 + JPA + Security + JWT，前端采用 Vue 3 (Composition API) + Vite + Pinia + Element Plus。
+- **全功能编辑器**：支持 Markdown 语法，实时预览，图片上传管理。
+- **互动性强**：支持文章/帖子的点赞、收藏、多级回复、系统消息通知。
+- **响应式设计**：前端界面简洁现代，适配不同屏幕尺寸。
+- **SEO 友好**：支持自定义文章 SEO 标题、关键词和描述。
 
-## 🛠 技术栈
+## 🛠️ 技术栈
 
-- **后端**: SpringBoot 3.5.9 + Spring Data JPA + Spring Security (JWT) + MySQL 8
-- **前端**: Vue 3 + Vite + Pinia + Element Plus + Axios
-- **工具**: Hutool (加密/工具) + Lombok
+### 后端 (Backend)
+- **核心框架**：Spring Boot 3.5.9
+- **权限安全**：Spring Security + JJWT (JSON Web Token)
+- **数据持久化**：Spring Data JPA + Hibernate
+- **数据库**：MySQL 8.0+
+- **工具类库**：Hutool, Lombok, Commons IO
+- **Markdown 处理**：Flexmark
+
+### 前端 (Frontend)
+- **框架**：Vue 3.5 (Composition API)
+- **构建工具**：Vite 7.2
+- **UI 组件库**：Element Plus
+- **状态管理**：Pinia
+- **路由**：Vue Router 4
+- **网络请求**：Axios
+- **代码高亮**：Highlight.js
+- **Markdown 渲染**：Marked
+
+## 📂 项目结构
+
+```text
+Blogs/
+├── blog-frontend/          # 前端 Vue 项目
+│   ├── src/                # 前端源码
+│   └── vite.config.js      # Vite 配置
+├── src/                    # 后端 Java 项目
+│   ├── main/java/          # 业务逻辑
+│   └── main/resources/     # 配置文件
+├── init.sql                # 数据库初始化脚本
+├── run.ps1                 # Windows 一键启动脚本
+├── uploads/                # 文件上传存储目录
+└── pom.xml                 # Maven 项目配置
+```
 
 ## 🚀 快速开始
 
-### 1. 准备工作
-- 安装 **JDK 17+**, **Node.js 18+**, **MySQL 8.0+**, **Maven 3.8+**。
+### 1. 环境准备
+- **Java 17** 或更高版本
+- **Node.js 18** 或更高版本
+- **MySQL 8.0** 或更高版本
+- **Maven 3.6+**
 
-### 2. 数据库初始化
-执行项目根目录下的 `init.sql` 脚本：
-```bash
-mysql -u your_user -p your_password < init.sql
-```
+### 2. 数据库配置
+1. 登录 MySQL，执行 `init.sql` 脚本：
+   ```sql
+   source your_path/init.sql;
+   ```
+2. 修改 `src/main/resources/application.properties` 中的数据库连接信息：
+   ```properties
+   spring.datasource.username=your_username
+   spring.datasource.password=your_password
+   ```
 
-### 3. 系统配置
-编辑 `src/main/resources/application.properties`，配置您的数据库连接。
+### 3. 运行项目
 
-### 4. 运行系统 (Windows)
-使用根目录下的 PowerShell 脚本一键启动：
+#### 方式一：使用一键启动脚本 (Windows)
+在项目根目录下运行 PowerShell 脚本：
 ```powershell
 ./run.ps1
 ```
+该脚本会自动检查环境、安装依赖并同时启动前后端服务。
 
-## 📂 功能模块
-
-### 超级管理员 (后台专属)
-- **仪表盘**: 全站可视化数据统计（用户/文章/帖子/评论数）。
-- **内容管控**: 审核、置顶、加精、删除全站所有文章、帖子、评论及回帖。
-- **用户管理**: 查看注册用户列表，禁用/解封账号。
-- **全局配置**: 板块管理、分类管理、站点名称/SEO/备案/审核开关配置。
-- **系统维护**: 媒体库管理、全站数据一键备份。
-
-### 注册用户 (前台全功能)
-- **创作权限**: 发布/编辑/管理自己的博客文章及论坛帖子。
-- **互动权限**: 对全站内容进行点赞、收藏、评论及楼中楼回复。
-- **个人中心**: 聚合管理「我的文章」、「我的帖子」、「我的收藏」、「消息通知」及个人资料设置。
-- **搜索系统**: 支持按关键字或用户名检索文章与帖子。
-
-### 未登录访客
-- **纯浏览**: 可查看全站公开的文章、帖子、分类及归档。
-- **互动引导**: 点击互动功能（发帖、点赞、评论等）自动引导至登录/注册页。
-
-## 🏗 项目结构
-```text
-Blogs/
-├── src/main/java/com/blogs/     # 后端核心源码
-├── src/main/resources/          # 配置文件与静态资源
-├── blog-frontend/               # Vue 3 前端源码
-├── init.sql                     # 数据库重构脚本
-├── run.ps1                      # 一键启动脚本
-└── uploads/                     # 媒体文件上传目录
+#### 方式二：手动运行
+**启动后端：**
+```bash
+mvn spring-boot:run
 ```
+后端 API 地址：`http://localhost:8080/api`
 
-## 🔐 安全说明
-- **用户认证**: 基于 JWT 无状态鉴权。
-- **内容安全**: 支持敏感词过滤及超管审核机制。
-- **归属校验**: 严格校验内容操作权的归属（普通用户仅能管理自己的内容）。
+**启动前端：**
+```bash
+cd blog-frontend
+npm install
+npm run dev
+```
+前端访问地址：`http://localhost:3000` (通常 Vite 默认端口)
 
----
-**提示**：首次部署后，请访问 `/login` 进行「管理员账号初始化」以开启全站管控。
+## 🔐 默认账号
+
+- **用户名**：`admin`
+- **密码**：`123456`
+- **角色**：超级管理员 (ADMIN)
+
+## 📝 主要功能模块
+
+- **用户系统**：注册登录、个人资料修改（头像、社交链接）、密码重置。
+- **博客模块**：文章发布/编辑、封面管理、分类与标签、草稿箱、置顶、回收站、访问密码。
+- **论坛模块**：板块管理、帖子发布、精华帖设置、置顶管理。
+- **互动系统**：嵌套评论（支持回复特定用户）、点赞、收藏。
+- **通知中心**：收到的评论、回复、点赞、收藏及系统通知提醒。
+- **后台管理**：仪表盘统计、文章/帖子/评论审核管理、分类标签管理、媒体文件管理、站点配置、友链管理。
+
+## 📄 开源协议
+
+本项目采用 [MIT License](LICENSE) 协议。

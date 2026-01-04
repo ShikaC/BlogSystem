@@ -51,7 +51,7 @@
         <div class="widget blogger-card">
           <el-avatar :size="80" :src="blogger.avatar || undefined">{{ (blogger.nickname || '未').charAt(0) }}</el-avatar>
           <h3>{{ blogger.nickname || '未登录' }}</h3>
-          <p class="bio">{{ blogger.bio || '请先登录以查看个人信息' }}</p>
+          <p class="bio">{{ userStore.isLoggedIn ? (blogger.bio || '暂无个人简介') : '请先登录以查看个人信息' }}</p>
         </div>
 
         <!-- 分类 -->
@@ -165,7 +165,7 @@ onMounted(async () => {
       blogger.value = { 
         displayNickname: '未登录',
         nickname: '未登录', 
-        bio: '请先登录以查看个人信息', 
+        bio: '', 
         avatar: null 
       }
     }

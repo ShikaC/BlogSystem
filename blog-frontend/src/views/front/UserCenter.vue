@@ -9,6 +9,7 @@
             <el-tag v-if="userStore.isLoggedIn">{{ userStore.isAdmin ? '超级管理员' : '创作者' }}</el-tag>
             <el-tag v-else>未登录</el-tag>
           </p>
+          <p v-if="profileForm.bio" class="user-bio">{{ profileForm.bio }}</p>
         </div>
       </div>
     </el-card>
@@ -185,6 +186,14 @@ onMounted(loadData)
   margin: 0 0 10px 0;
 }
 
+.user-bio {
+  margin: 5px 0 0 0;
+  color: #666;
+  font-size: 14px;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
 .center-content {
   margin-top: 20px;
 }
@@ -214,4 +223,3 @@ onMounted(loadData)
   color: #909399;
 }
 </style>
-

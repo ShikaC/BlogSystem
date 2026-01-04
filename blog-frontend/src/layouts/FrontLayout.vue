@@ -113,7 +113,8 @@ const handleUserCommand = (command) => {
   if (command === 'logout') {
     userStore.logout()
     ElMessage.success('已退出登录')
-    router.push('/')
+    // 退出登录后刷新页面以更新UI状态
+    window.location.reload()
   } else if (command === 'profile') {
     router.push('/user/profile')
   } else if (command === 'article') {

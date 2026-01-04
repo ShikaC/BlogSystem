@@ -101,7 +101,8 @@ const handleLogout = () => {
     type: 'warning'
   }).then(() => {
     userStore.logout()
-    router.push('/login')
+    // 退出登录后刷新页面以更新UI状态
+    window.location.reload()
   })
 }
 </script>

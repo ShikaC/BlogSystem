@@ -103,38 +103,6 @@ public class FrontController {
     }
     
     /**
-     * 搜索文章
-     */
-    @GetMapping("/articles/search")
-    public Result<PageResult<ArticleVO>> searchArticles(
-            @RequestParam String keyword,
-            @RequestParam(defaultValue = "1") Integer page,
-            @RequestParam(defaultValue = "10") Integer size) {
-        PageResult<ArticleVO> result = articleService.searchArticles(keyword, page, size);
-        return Result.success(result);
-    }
-    
-    /**
-     * 热门文章
-     */
-    @GetMapping("/articles/hot")
-    public Result<List<ArticleVO>> getHotArticles(@RequestParam(defaultValue = "10") Integer limit) {
-        List<ArticleVO> articles = articleService.getHotArticles(limit);
-        return Result.success(articles);
-    }
-    
-    /**
-     * 相关推荐
-     */
-    @GetMapping("/articles/{id}/related")
-    public Result<List<ArticleVO>> getRelatedArticles(
-            @PathVariable Long id,
-            @RequestParam(defaultValue = "5") Integer limit) {
-        List<ArticleVO> articles = articleService.getRelatedArticles(id, limit);
-        return Result.success(articles);
-    }
-    
-    /**
      * 时间归档列表
      */
     @GetMapping("/archives")
@@ -239,7 +207,7 @@ public class FrontController {
      */
     @GetMapping("/tags")
     public Result<List<Tag>> getTags() {
-        List<Tag> tags = tagService.getTagsByArticleCount();
+        List<Tag> tags = tagService.getAllTags();
         return Result.success(tags);
     }
     
@@ -252,27 +220,75 @@ public class FrontController {
         return Result.success(tag);
     }
     
+    /**
+     * 热门文章
+     */
+    @GetMapping("/articles/hot")
+    public Result<List<ArticleVO>> getHotArticles(@RequestParam(defaultValue = "10") Integer limit) {
+        List<ArticleVO> articles = articleService.getHotArticles(limit);
+        return Result.success(articles);
+    }
+    
+    /**
+     * 相关推荐
+     */
+    @GetMapping("/articles/{id}/related")
+    public Result<List<ArticleVO>> getRelatedArticles(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "5") Integer limit) {
+        List<ArticleVO> articles = articleService.getRelatedArticles(id, limit);
+        return Result.success(articles);
+    }
+    
+    // ==================== 博主信息 ====================
+    
+    /**
+     * 获取博主信息 (兼容旧接口名，实际获取当前登录用户信息)
+     */
+    @GetMapping("/blogger")
+    public Result<UserDTO> getBloggerInfo() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        if ("anonymousUser".equals(username)) {
+            return Result.success(null); // 未登录返回null
+        }
+        UserDTO user = userService.getUserInfo(username);
+        return Result.success(user);
+    }
+    
+    /**
+     * 获取当前登录用户信息
+     */
+    @GetMapping("/user/info")
+    public Result<UserDTO> getUserInfo() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        if ("anonymousUser".equals(username)) {
+            return Result.success(null); // 未登录返回null
+        }
+        UserDTO user = userService.getUserInfo(username);
+        return Result.success(user);
+    }
+    
     // ==================== 评论相关 ====================
     
     /**
      * 获取文章评论
      */
-    @GetMapping("/articles/{articleId}/comments")
-    public Result<List<CommentVO>> getArticleComments(@PathVariable Long articleId) {
-        List<CommentVO> comments = commentService.getArticleComments(articleId);
+    @GetMapping("/articles/{id}/comments")
+    public Result<List<CommentVO>> getArticleComments(@PathVariable Long id) {
+        List<CommentVO> comments = commentService.getArticleComments(id);
         return Result.success(comments);
     }
     
+    // ==================== 其他 ====================
+    
     /**
-     * 最新评论
+     * 获取最新评论
      */
     @GetMapping("/comments/latest")
     public Result<List<CommentVO>> getLatestComments() {
         List<CommentVO> comments = commentService.getLatestComments();
         return Result.success(comments);
     }
-    
-    // ==================== 其他 ====================
     
     /**
      * 获取管理员信息 (原博主信息)

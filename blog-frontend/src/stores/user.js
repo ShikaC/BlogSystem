@@ -26,16 +26,19 @@ export const useUserStore = defineStore('user', () => {
   const nickname = ref(token.value ? (localStorage.getItem('nickname') || '') : '')
   const avatar = ref(token.value ? (localStorage.getItem('avatar') || '') : '')
   const role = ref(token.value ? (localStorage.getItem('role') || '') : '')
+  const id = ref(token.value ? (localStorage.getItem('userId') || '') : '') // 添加用户ID
   
   const setUser = (data) => {
     token.value = data.token
     nickname.value = data.nickname || ''
     avatar.value = data.avatar || ''
     role.value = data.role || ''
+    id.value = data.id || '' // 设置用户ID
     localStorage.setItem('token', data.token)
     localStorage.setItem('nickname', data.nickname || '')
     localStorage.setItem('avatar', data.avatar || '')
     localStorage.setItem('role', data.role || '')
+    localStorage.setItem('userId', data.id || '') // 存储用户ID
   }
   
   const logout = () => {
@@ -43,10 +46,12 @@ export const useUserStore = defineStore('user', () => {
     nickname.value = ''
     avatar.value = ''
     role.value = ''
+    id.value = '' // 清除用户ID
     localStorage.removeItem('token')
     localStorage.removeItem('nickname')
     localStorage.removeItem('avatar')
     localStorage.removeItem('role')
+    localStorage.removeItem('userId') // 移除用户ID
   }
   
   const isLoggedIn = computed(() => !!token.value)
@@ -61,10 +66,11 @@ export const useUserStore = defineStore('user', () => {
     return nickname.value || '用户'
   })
   const userInfo = computed(() => ({
+    id: id.value, // 添加ID到userInfo
     nickname: nickname.value,
     avatar: avatar.value,
     role: role.value
   }))
   
-  return { token, nickname, avatar, role, setUser, logout, isLoggedIn, isAdmin, displayNickname, userInfo }
+  return { token, nickname, avatar, role, id, setUser, logout, isLoggedIn, isAdmin, displayNickname, userInfo }
 })

@@ -37,16 +37,25 @@ public class FrontCommentController {
             throw new BusinessException("请先登录再发表评论");
         }
         
-        // 验证码验证
-        if (request.getCaptchaKey() != null && request.getCaptcha() != null) {
-            if (!captchaService.verifyCaptcha(request.getCaptchaKey(), request.getCaptcha())) {
-                throw new BusinessException("验证码错误");
-            }
-        }
-        
+        // 移除验证码验证，用户登录后即可发表评论
         String ipAddress = getClientIp(httpRequest);
         CommentVO comment = commentService.createComment(request, username, ipAddress);
         return Result.success(comment);
+    }
+    
+    /**
+     * 删除评论（仅限用户删除自己的评论）
+     */
+    @DeleteMapping("/{id}")
+    public Result<Void> deleteComment(@PathVariable Long id) {
+        // 获取当前用户
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        if ("anonymousUser".equals(username)) {
+            throw new BusinessException("请先登录");
+        }
+        
+        commentService.deleteUserComment(id, username);
+        return Result.success();
     }
     
     private String getClientIp(HttpServletRequest request) {

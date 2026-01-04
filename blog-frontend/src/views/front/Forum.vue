@@ -139,7 +139,9 @@ const submitPost = async () => {
 }
 
 const goToDetail = (id) => {
-  router.push(`/forum/post/${id}`)
+  if (id) {
+    router.push(`/forum/post/${id}`)
+  }
 }
 
 const formatDate = (date) => {

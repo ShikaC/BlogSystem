@@ -22,22 +22,22 @@ import java.util.List;
 @Service
 @Transactional
 public class ForumService {
-    
+
     @Autowired
     private ForumSectionRepository sectionRepository;
-    
+
     @Autowired
     private ForumPostRepository postRepository;
-    
+
     @Autowired
     private CommentRepository commentRepository;
 
     @Autowired
     private UserRepository userRepository;
-    
+
     @Autowired
     private FavoriteRepository favoriteRepository;
-    
+
     @Autowired
     private LikeRecordRepository likeRecordRepository;
 
@@ -201,7 +201,8 @@ public class ForumService {
             throw new BusinessException("帖子ID不能为空");
         }
         Pageable pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.ASC, "createdAt"));
-        Page<Comment> commentPage = commentRepository.findByTargetTypeAndTargetIdAndStatus("FORUM_POST", postId, 1, pageable);
+        Page<Comment> commentPage = commentRepository.findByTargetTypeAndTargetIdAndStatus("FORUM_POST", postId, 1,
+                pageable);
 
         List<ForumPostComment> list = commentPage.getContent().stream().map(c -> {
             ForumPostComment fc = new ForumPostComment();
@@ -214,10 +215,54 @@ public class ForumService {
             fc.setStatus(c.getStatus());
             fc.setIpAddress(c.getIpAddress());
             fc.setCreatedAt(c.getCreatedAt());
+
+            // 填充用户信息
+            fc.setNickname(c.getNickname());
+            fc.setAvatar(c.getAvatar());
+            fc.setReplyToNickname(c.getReplyToNickname());
+
+            // 如果 Comment 中的 nickname 为空（可能是旧数据），则尝试从 User 获取
+            if (fc.getNickname() == null && c.getUser() != null) {
+                fc.setNickname(c.getUser().getNickname());
+                fc.setAvatar(c.getUser().getAvatar());
+            }
+
             return fc;
         }).toList();
 
         return PageResult.of(list, commentPage.getTotalElements(), page, size);
+    }
+
+    /**
+     * 删除回帖（仅允许删除自己的回帖）
+     */
+    public void deleteComment(Long commentId, Long userId) {
+        if (commentId == null) {
+            throw new BusinessException("评论ID不能为空");
+        }
+        if (userId == null) {
+            throw new BusinessException("用户ID不能为空");
+        }
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new BusinessException("评论不存在"));
+
+        // 检查是否为评论作者
+        Long commentUserId = comment.getUser() != null ? comment.getUser().getId() : null;
+        if (!userId.equals(commentUserId)) {
+            throw new BusinessException("无权删除他人评论");
+        }
+
+        // 更新帖子评论数
+        if ("FORUM_POST".equals(comment.getTargetType()) && comment.getTargetId() != null) {
+            postRepository.findById(comment.getTargetId()).ifPresent(post -> {
+                post.setCommentCount(Math.max(0, post.getCommentCount() - 1));
+                postRepository.save(post);
+            });
+        }
+
+        // 软删除评论
+        comment.setStatus(0);
+        commentRepository.save(comment);
     }
 
     // ==================== 点赞收藏 ====================
@@ -230,14 +275,14 @@ public class ForumService {
             throw new BusinessException("帖子ID不能为空");
         }
         if (likeRecordRepository.findByUserIdAndTargetIdAndType(userId, postId, "POST").isPresent()) {
-            return;
+            throw new BusinessException("您已点赞过该帖子");
         }
         LikeRecord record = new LikeRecord();
         record.setUserId(userId);
         record.setTargetId(postId);
         record.setType("POST");
         likeRecordRepository.save(record);
-        
+
         ForumPost post = postRepository.findById(postId)
                 .orElseThrow(() -> new BusinessException("帖子不存在"));
         post.setLikeCount(post.getLikeCount() + 1);
@@ -252,8 +297,7 @@ public class ForumService {
                     "你的帖子被点赞",
                     "有人点赞了你的帖子",
                     postId,
-                    "FORUM_POST"
-            );
+                    "FORUM_POST");
         }
     }
 
@@ -265,14 +309,14 @@ public class ForumService {
             throw new BusinessException("帖子ID不能为空");
         }
         if (favoriteRepository.findByUserIdAndTargetIdAndType(userId, postId, "POST").isPresent()) {
-            return;
+            throw new BusinessException("您已收藏过该帖子");
         }
         Favorite favorite = new Favorite();
         favorite.setUserId(userId);
         favorite.setTargetId(postId);
         favorite.setType("POST");
         favoriteRepository.save(favorite);
-        
+
         ForumPost post = postRepository.findById(postId)
                 .orElseThrow(() -> new BusinessException("帖子不存在"));
         post.setCollectCount(post.getCollectCount() + 1);
@@ -305,8 +349,7 @@ public class ForumService {
                             "有人回复了你",
                             preview(saved.getContent()),
                             saved.getId(),
-                            "COMMENT"
-                    );
+                            "COMMENT");
                 }
             });
         }
@@ -320,8 +363,7 @@ public class ForumService {
                     "有人回帖了你",
                     preview(saved.getContent()),
                     post.getId(),
-                    "FORUM_POST"
-            );
+                    "FORUM_POST");
         }
     }
 
@@ -333,4 +375,3 @@ public class ForumService {
         return c.length() > 120 ? c.substring(0, 120) + "..." : c;
     }
 }
-

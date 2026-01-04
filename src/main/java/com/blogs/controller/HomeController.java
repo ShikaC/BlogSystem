@@ -1,18 +1,19 @@
 package com.blogs.controller;
 
-import com.blogs.common.Result;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 /**
- * 首页控制器
+ * 前端路由控制器 - 处理Vue Router History模式
  */
-@RestController
+@Controller
 public class HomeController {
 
-    @GetMapping("/")
-    public Result<String> index() {
-        return Result.success("Blogs API is running!");
+    /**
+     * 处理前端路由，将所有非API请求转发到index.html
+     */
+    @RequestMapping(value = {"/", "/forum/**", "/article/**", "/category/**", "/tag/**", "/archives/**", "/search/**", "/about/**", "/links/**", "/user/**", "/admin/**"})
+    public String index() {
+        return "forward:/index.html";
     }
 }
-

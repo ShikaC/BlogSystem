@@ -14,26 +14,26 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "users")
 public class User {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
+
     @Column(nullable = false, unique = true, length = 50)
     private String username;
-    
+
     @Column(nullable = false)
     private String password;
-    
-    @Column(length = 50)
+
+    @Column(length = 100)
     private String nickname;
-    
+
     @Column(length = 500)
     private String avatar;
-    
-    @Column(length = 1000)
+
+    @Column(columnDefinition = "TEXT")
     private String bio;
-    
+
     @Column(length = 100)
     private String email;
 
@@ -48,20 +48,20 @@ public class User {
      */
     @Column(nullable = false)
     private Integer status = 1;
-    
-    @Column(length = 100)
+
+    @Column(length = 200)
     private String github;
-    
-    @Column(length = 100)
+
+    @Column(length = 200)
     private String zhihu;
-    
+
     @Column(length = 100)
     private String weixin;
-    
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
-    
+
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;

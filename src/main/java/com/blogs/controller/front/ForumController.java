@@ -3,6 +3,7 @@ package com.blogs.controller.front;
 import com.blogs.common.PageResult;
 import com.blogs.common.Result;
 import com.blogs.entity.ForumPost;
+import com.blogs.entity.ForumPostComment;
 import com.blogs.entity.ForumSection;
 import com.blogs.service.ForumService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,5 +47,15 @@ public class ForumController {
     public Result<ForumPost> getPost(@PathVariable Long id) {
         return Result.success(forumService.getPost(id));
     }
-}
 
+    /**
+     * 获取帖子评论列表
+     */
+    @GetMapping("/posts/{id}/comments")
+    public Result<PageResult<ForumPostComment>> getPostComments(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "100") Integer size) {
+        return Result.success(forumService.getComments(id, page, size));
+    }
+}

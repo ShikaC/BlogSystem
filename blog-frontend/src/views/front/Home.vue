@@ -58,7 +58,7 @@
         <div class="widget">
           <h4>分类</h4>
           <div class="category-list">
-            <div v-for="cat in categories" :key="cat.id" class="category-item" @click="$router.push(`/category/${cat.id}`)">
+            <div v-for="cat in categories" :key="cat.id" class="category-item" @click="goToCategory(cat.id)">
               <span>{{ cat.name }}</span>
               <span class="count">{{ cat.articleCount }}</span>
             </div>
@@ -69,8 +69,8 @@
         <div class="widget">
           <h4>标签</h4>
           <div class="tag-cloud">
-            <el-tag v-for="tag in tags" :key="tag.id" @click="$router.push(`/tag/${tag.id}`)" style="cursor:pointer;margin:4px;">
-              {{ tag.name }} ({{ tag.articleCount }})
+            <el-tag v-for="tag in tags" :key="tag.id" @click="goToTag(tag.id)" style="cursor:pointer;margin:4px;">
+              {{ tag.name }} ({{ tag.articleCount ?? 0 }})
             </el-tag>
           </div>
         </div>
@@ -115,7 +115,21 @@ const formatDate = (dateStr) => {
 }
 
 const goToArticle = (id) => {
-  router.push(`/article/${id}`)
+  if (id) {
+    router.push(`/article/${id}`)
+  }
+}
+
+const goToCategory = (id) => {
+  if (id) {
+    router.push(`/category/${id}`)
+  }
+}
+
+const goToTag = (id) => {
+  if (id) {
+    router.push(`/tag/${id}`)
+  }
 }
 
 const handlePageChange = (newPage) => {
@@ -127,8 +141,10 @@ const loadArticles = async () => {
   loading.value = true
   try {
     const res = await getArticles({ page: page.value, size: pageSize.value })
-    articles.value = res.data.list
-    total.value = res.data.total
+    if (res && res.data) {
+      articles.value = res.data.list || []
+      total.value = res.data.total || 0
+    }
   } catch (e) {
     console.error(e)
   } finally {
@@ -144,11 +160,22 @@ onMounted(async () => {
     if (userStore.isLoggedIn) {
       try {
         const userRes = await getUserInfo()
-        const userData = userRes.data || {}
-        // 合并API返回的数据和显示昵称
-        blogger.value = {
-          ...userData,
-          displayNickname: userStore.displayNickname
+        // 检查响应是否有效
+        if (userRes && userRes.data) {
+          const userData = userRes.data
+          // 合并API返回的数据和显示昵称
+          blogger.value = {
+            ...userData,
+            displayNickname: userStore.displayNickname
+          }
+        } else {
+          // 如果API调用失败或返回空数据，使用store中的信息作为备选
+          blogger.value = {
+            nickname: userStore.nickname,
+            avatar: userStore.avatar,
+            bio: '',
+            displayNickname: userStore.displayNickname
+          }
         }
       } catch (err) {
         console.error('获取用户信息失败:', err)
@@ -156,7 +183,7 @@ onMounted(async () => {
         blogger.value = {
           nickname: userStore.nickname,
           avatar: userStore.avatar,
-          bio: '个人简介',
+          bio: '',
           displayNickname: userStore.displayNickname
         }
       }
@@ -170,16 +197,32 @@ onMounted(async () => {
       }
     }
     
-    const [catRes, tagRes, hotRes] = await Promise.all([
-      getCategories(),
-      getTags(),
-      getHotArticles(10)
-    ])
-    categories.value = catRes.data || []
-    tags.value = tagRes.data || []
-    hotArticles.value = hotRes.data || []
+    // 并行加载其他数据，增加错误处理
+    try {
+      const [catRes, tagRes, hotRes] = await Promise.allSettled([
+        getCategories(),
+        getTags(),
+        getHotArticles(10)
+      ])
+      
+      categories.value = catRes.status === 'fulfilled' ? (catRes.value.data || []) : []
+      tags.value = tagRes.status === 'fulfilled' ? (tagRes.value.data || []) : []
+      hotArticles.value = hotRes.status === 'fulfilled' ? (hotRes.value.data || []) : []
+    } catch (e) {
+      console.error('加载侧边栏数据失败:', e)
+      // 即使侧边栏数据加载失败，主页仍可正常显示
+    }
   } catch (e) {
-    console.error(e)
+    console.error('主页初始化失败:', e)
+    // 即使初始化失败，也要确保页面能正常显示
+    if (!userStore.isLoggedIn) {
+      blogger.value = { 
+        displayNickname: '未登录',
+        nickname: '未登录', 
+        bio: '', 
+        avatar: null 
+      }
+    }
   }
 })
 </script>

@@ -12,6 +12,7 @@ import java.util.List;
 @Data
 public class CommentVO {
     private Long id;
+    private Long userId;  // 添加用户ID字段
     private Long articleId;
     private Long targetId;
     private String targetType;
@@ -31,6 +32,7 @@ public class CommentVO {
     public static CommentVO fromEntity(Comment comment) {
         CommentVO vo = new CommentVO();
         vo.setId(comment.getId());
+        vo.setUserId(comment.getUser() != null ? comment.getUser().getId() : null);  // 设置用户ID
         vo.setTargetId(comment.getTargetId());
         vo.setTargetType(comment.getTargetType());
         // 兼容旧字段：文章评论仍可通过 articleId 获取

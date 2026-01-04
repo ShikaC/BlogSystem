@@ -52,8 +52,9 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 // 公开接口 - 前台访问
+                .requestMatchers("/front/user/info").permitAll()  // 允许获取用户信息无需认证
                 .requestMatchers("/front/user/**").authenticated()
-                .requestMatchers("/front/comments").authenticated()
+                .requestMatchers("/front/comments/**").authenticated()
                 .requestMatchers("/front/**").permitAll()
                 .requestMatchers("/auth/**").permitAll()
                 .requestMatchers("/captcha/**").permitAll()

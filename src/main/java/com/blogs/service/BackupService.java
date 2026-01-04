@@ -1,6 +1,5 @@
 package com.blogs.service;
 
-import com.blogs.dto.ArticleVO;
 import com.blogs.entity.Article;
 import com.blogs.entity.Comment;
 import com.blogs.repository.ArticleRepository;
@@ -21,62 +20,62 @@ import java.util.zip.ZipOutputStream;
  */
 @Service
 public class BackupService {
-    
+
     @Autowired
     private ArticleRepository articleRepository;
-    
+
     @Autowired
     private CommentRepository commentRepository;
-    
+
     @Autowired
     private ObjectMapper objectMapper;
-    
+
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-    
+
     /**
      * 导出所有文章为Markdown格式
      */
     public byte[] exportArticlesAsMarkdown() throws IOException {
         List<Article> articles = articleRepository.findAll();
-        
+
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try (ZipOutputStream zos = new ZipOutputStream(baos)) {
             for (Article article : articles) {
                 String fileName = sanitizeFileName(article.getTitle()) + ".md";
                 String content = buildMarkdownContent(article);
-                
+
                 ZipEntry entry = new ZipEntry(fileName);
                 zos.putNextEntry(entry);
                 zos.write(content.getBytes(StandardCharsets.UTF_8));
                 zos.closeEntry();
             }
         }
-        
+
         return baos.toByteArray();
     }
-    
+
     /**
      * 导出所有文章为HTML格式
      */
     public byte[] exportArticlesAsHtml() throws IOException {
         List<Article> articles = articleRepository.findAll();
-        
+
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try (ZipOutputStream zos = new ZipOutputStream(baos)) {
             for (Article article : articles) {
                 String fileName = sanitizeFileName(article.getTitle()) + ".html";
                 String content = buildHtmlContent(article);
-                
+
                 ZipEntry entry = new ZipEntry(fileName);
                 zos.putNextEntry(entry);
                 zos.write(content.getBytes(StandardCharsets.UTF_8));
                 zos.closeEntry();
             }
         }
-        
+
         return baos.toByteArray();
     }
-    
+
     /**
      * 导出评论数据为JSON
      */
@@ -84,7 +83,7 @@ public class BackupService {
         List<Comment> comments = commentRepository.findAll();
         return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(comments);
     }
-    
+
     /**
      * 导出所有数据
      */
@@ -96,13 +95,13 @@ public class BackupService {
             for (Article article : articles) {
                 String fileName = "articles/" + sanitizeFileName(article.getTitle()) + ".md";
                 String content = buildMarkdownContent(article);
-                
+
                 ZipEntry entry = new ZipEntry(fileName);
                 zos.putNextEntry(entry);
                 zos.write(content.getBytes(StandardCharsets.UTF_8));
                 zos.closeEntry();
             }
-            
+
             // 导出评论
             List<Comment> comments = commentRepository.findAll();
             ZipEntry commentEntry = new ZipEntry("comments.json");
@@ -110,10 +109,10 @@ public class BackupService {
             zos.write(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(comments));
             zos.closeEntry();
         }
-        
+
         return baos.toByteArray();
     }
-    
+
     private String buildMarkdownContent(Article article) {
         StringBuilder sb = new StringBuilder();
         sb.append("---\n");
@@ -136,7 +135,7 @@ public class BackupService {
         sb.append(article.getContent() != null ? article.getContent() : "");
         return sb.toString();
     }
-    
+
     private String buildHtmlContent(Article article) {
         StringBuilder sb = new StringBuilder();
         sb.append("<!DOCTYPE html>\n");
@@ -154,9 +153,10 @@ public class BackupService {
         sb.append("</html>");
         return sb.toString();
     }
-    
+
     private String sanitizeFileName(String name) {
-        if (name == null) return "untitled";
+        if (name == null)
+            return "untitled";
         return name.replaceAll("[\\\\/:*?\"<>|]", "_").trim();
     }
 }

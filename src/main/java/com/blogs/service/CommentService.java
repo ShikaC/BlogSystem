@@ -108,6 +108,30 @@ public class CommentService {
     }
     
     /**
+     * 用户删除自己的评论
+     */
+    public void deleteUserComment(Long id, String username) {
+        Comment comment = commentRepository.findById(id)
+                .orElseThrow(() -> new BusinessException("评论不存在"));
+        
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new BusinessException("用户不存在"));
+        
+        // 检查评论是否属于当前用户
+        if (!comment.getUser().getId().equals(user.getId())) {
+            throw new BusinessException("无权删除此评论");
+        }
+        
+        String targetType = normalizeTargetTypeForExisting(comment);
+        Long targetId = resolveTargetIdForExisting(comment);
+        if (comment.getStatus() == 1 && targetType != null && targetId != null) {
+            updateTargetCommentCount(targetType, targetId, -1);
+        }
+        
+        commentRepository.delete(comment);
+    }
+    
+    /**
      * 博主回复评论
      */
     @SuppressWarnings("deprecation")
@@ -224,7 +248,7 @@ public class CommentService {
     }
     
     /**
-     * 删除评论
+     * 删除评论（管理员）
      */
     public void deleteComment(Long id) {
         Comment comment = commentRepository.findById(id)

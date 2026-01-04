@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     INDEX idx_username (username),
     INDEX idx_role (role)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户信息表';
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '用户信息表';
 
 -- =============================================
 -- 2. 文章分类表 (博客)
@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS category (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     INDEX idx_parent_id (parent_id),
     INDEX idx_sort_order (sort_order)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='文章分类表';
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '文章分类表';
 
 -- =============================================
 -- 3. 文章标签表 (博客)
@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS tag (
     name VARCHAR(50) NOT NULL UNIQUE COMMENT '标签名称',
     color VARCHAR(20) DEFAULT '#409eff' COMMENT '标签颜色',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='文章标签表';
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '文章标签表';
 
 -- =============================================
 -- 4. 文章表 (博客)
@@ -83,8 +83,10 @@ CREATE TABLE IF NOT EXISTS article (
     INDEX idx_is_top (is_top),
     INDEX idx_category_id (category_id),
     INDEX idx_created_at (created_at),
-    FULLTEXT INDEX ft_title_content (title, content) WITH PARSER ngram
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='文章表';
+    FULLTEXT INDEX ft_title_content (title, content)
+    WITH
+        PARSER ngram
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '文章表';
 
 -- =============================================
 -- 5. 文章-标签关联表
@@ -94,28 +96,35 @@ CREATE TABLE IF NOT EXISTS article_tag (
     tag_id BIGINT NOT NULL COMMENT '标签ID',
     PRIMARY KEY (article_id, tag_id),
     INDEX idx_tag_id (tag_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='文章标签关联表';
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '文章标签关联表';
 
 -- =============================================
--- 6. 文章评论表
+-- 6. 文章评论表 (统一评论：支持文章/论坛帖子)
 -- =============================================
 CREATE TABLE IF NOT EXISTS comment (
     id BIGINT PRIMARY KEY AUTO_INCREMENT COMMENT '主键ID',
-    article_id BIGINT NOT NULL COMMENT '文章ID',
+    article_id BIGINT COMMENT '文章ID (历史兼容字段)',
+    target_id BIGINT COMMENT '统一目标ID：文章ID / 帖子ID',
+    target_type VARCHAR(20) COMMENT '统一目标类型：ARTICLE / FORUM_POST',
     user_id BIGINT COMMENT '评论者用户ID(匿名则为NULL)',
     content TEXT NOT NULL COMMENT '评论内容',
     nickname VARCHAR(50) COMMENT '评论者昵称(冗余)',
     avatar VARCHAR(500) COMMENT '头像URL(冗余)',
+    email VARCHAR(100) COMMENT '邮箱',
+    website VARCHAR(200) COMMENT '网站',
     ip_address VARCHAR(50) COMMENT 'IP地址',
     status INT DEFAULT 1 COMMENT '状态: 0-待审核 1-已通过 2-已拒绝',
     parent_id BIGINT COMMENT '父评论ID(回复)',
-    reply_to_id BIGINT COMMENT '回复对象用户ID',
+    reply_to_id BIGINT COMMENT '回复对象评论ID',
+    reply_to_nickname VARCHAR(50) COMMENT '回复对象昵称',
+    is_blogger BOOLEAN DEFAULT FALSE COMMENT '是否为博主回复',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     INDEX idx_article_id (article_id),
+    INDEX idx_target (target_type, target_id),
     INDEX idx_user_id (user_id),
     INDEX idx_status (status),
     INDEX idx_parent_id (parent_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='文章评论表';
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '统一评论表';
 
 -- =============================================
 -- 7. 论坛板块表
@@ -129,7 +138,7 @@ CREATE TABLE IF NOT EXISTS forum_section (
     parent_id BIGINT DEFAULT NULL COMMENT '父板块ID',
     status INT DEFAULT 1 COMMENT '状态: 0-禁用 1-启用',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='论坛板块表';
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '论坛板块表';
 
 -- =============================================
 -- 8. 论坛帖子表
@@ -154,8 +163,10 @@ CREATE TABLE IF NOT EXISTS forum_post (
     INDEX idx_status (status),
     INDEX idx_is_top (is_top),
     INDEX idx_created_at (created_at),
-    FULLTEXT INDEX ft_title_content (title, content) WITH PARSER ngram
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='论坛帖子表';
+    FULLTEXT INDEX ft_title_content (title, content)
+    WITH
+        PARSER ngram
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '论坛帖子表';
 
 -- =============================================
 -- 9. 论坛回帖表
@@ -173,7 +184,7 @@ CREATE TABLE IF NOT EXISTS forum_post_comment (
     INDEX idx_post_id (post_id),
     INDEX idx_user_id (user_id),
     INDEX idx_parent_id (parent_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='论坛回帖表';
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '论坛回帖表';
 
 -- =============================================
 -- 10. 收藏表 (统一收藏 文章 + 帖子)
@@ -186,7 +197,7 @@ CREATE TABLE IF NOT EXISTS favorite (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     UNIQUE KEY uk_user_target_type (user_id, target_id, type),
     INDEX idx_user_id (user_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户收藏表';
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '用户收藏表';
 
 -- =============================================
 -- 11. 点赞表 (统一点赞 文章 + 帖子)
@@ -199,7 +210,7 @@ CREATE TABLE IF NOT EXISTS like_record (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     UNIQUE KEY uk_user_target_type (user_id, target_id, type),
     INDEX idx_user_id (user_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户点赞表';
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '用户点赞表';
 
 -- =============================================
 -- 12. 消息通知表
@@ -217,7 +228,7 @@ CREATE TABLE IF NOT EXISTS notification (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     INDEX idx_receiver_id (receiver_id),
     INDEX idx_is_read (is_read)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='消息通知表';
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '消息通知表';
 
 -- =============================================
 -- 其他原表保留并适配
@@ -231,7 +242,7 @@ CREATE TABLE IF NOT EXISTS friend_link (
     sort_order INT DEFAULT 0,
     is_visible BOOLEAN DEFAULT TRUE,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
 CREATE TABLE IF NOT EXISTS media (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
@@ -242,7 +253,7 @@ CREATE TABLE IF NOT EXISTS media (
     category VARCHAR(50),
     url VARCHAR(500),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
 CREATE TABLE IF NOT EXISTS site_config (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
@@ -250,21 +261,53 @@ CREATE TABLE IF NOT EXISTS site_config (
     config_value TEXT,
     description VARCHAR(200),
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
 -- =============================================
 -- 初始化数据
 -- =============================================
 -- 默认管理员: admin / 123456 (BCrypt加密)
-INSERT INTO users (username, password, nickname, role, status) VALUES 
-('admin', '$2b$12$AyzmbsXTz6URch/o5XcMoOFvrQUHJAgf5MXxW/9tjyj78FyhI/qBi', '超级管理员', 'ADMIN', 1)
-ON DUPLICATE KEY UPDATE username = username;
+INSERT INTO
+    users (
+        username,
+        password,
+        nickname,
+        role,
+        status
+    )
+VALUES (
+        'admin',
+        '$2b$12$AyzmbsXTz6URch/o5XcMoOFvrQUHJAgf5MXxW/9tjyj78FyhI/qBi',
+        '超级管理员',
+        'ADMIN',
+        1
+    )
+ON DUPLICATE KEY UPDATE
+    username = username;
 
-INSERT INTO site_config (config_key, config_value, description) VALUES
-('site_name', '综合系统', '站点名称'),
-('enable_audit', 'false', '是否开启内容审核'),
-('enable_comment', 'true', '是否开启评论'),
-('articles_per_page', '10', '每页文章数')
-ON DUPLICATE KEY UPDATE config_value = VALUES(config_value);
+INSERT INTO
+    site_config (
+        config_key,
+        config_value,
+        description
+    )
+VALUES ('site_name', '综合系统', '站点名称'),
+    (
+        'enable_audit',
+        'false',
+        '是否开启内容审核'
+    ),
+    (
+        'enable_comment',
+        'true',
+        '是否开启评论'
+    ),
+    (
+        'articles_per_page',
+        '10',
+        '每页文章数'
+    )
+ON DUPLICATE KEY UPDATE
+    config_value = VALUES(config_value);
 
 SELECT '数据库重构脚本执行完成！' AS message;

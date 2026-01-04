@@ -40,10 +40,20 @@
       </div>
 
       <div class="comment-list">
+        <div v-if="comments.length === 0" class="empty-comments">暂无回帖，快来抢沙发！</div>
         <div v-for="comment in comments" :key="comment.id" class="comment-item">
           <div class="comment-info">
-            <span class="comment-user">用户 {{ comment.userId }}</span>
+            <span class="comment-user">{{ comment.nickname || '用户 ' + comment.userId }}</span>
             <span class="comment-time">{{ formatDate(comment.createdAt) }}</span>
+            <el-button 
+              v-if="userStore.isLoggedIn && Number(userStore.id) === comment.userId" 
+              type="danger" 
+              link 
+              size="small" 
+              @click="handleDeleteComment(comment.id)"
+            >
+              删除
+            </el-button>
           </div>
           <div class="comment-text">{{ comment.content }}</div>
         </div>
@@ -55,7 +65,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getForumPostDetail, createPostComment, likePost, collectPost } from '@/api/front'
+import { getForumPost, getForumPostComments, createPostComment, deletePostComment, likePost, collectPost } from '@/api/front'
 import { useUserStore } from '@/stores/user'
 import { ElMessage } from 'element-plus'
 
@@ -64,45 +74,82 @@ const router = useRouter()
 const userStore = useUserStore()
 
 const post = ref(null)
-const comments = ref([]) // 简化处理，暂时直接在详情页加载或实现独立接口
+const comments = ref([])
 const commentContent = ref('')
 
 const loadData = async () => {
   const id = route.params.id
-  const res = await getForumPostDetail(id)
-  post.value = res.data
+  try {
+    const res = await getForumPost(id)
+    post.value = res.data
+    // 加载评论
+    try {
+      const commentRes = await getForumPostComments(id, { page: 1, size: 100 })
+      comments.value = commentRes.data?.list || commentRes.data || []
+    } catch (e) {
+      console.error('加载评论失败:', e)
+      comments.value = []
+    }
+  } catch (e) {
+    console.error('加载帖子失败:', e)
+    ElMessage.error('加载帖子失败')
+  }
 }
 
 const handleLike = async () => {
   if (!userStore.isLoggedIn) return ElMessage.warning('请先登录')
-  await likePost(post.value.id)
-  post.value.likeCount++
-  ElMessage.success('已点赞')
+  try {
+    await likePost(post.value.id)
+    post.value.likeCount++
+    ElMessage.success('已点赞')
+  } catch (e) {
+    // 后端会在用户重复点赞时静默处理
+    ElMessage.info('您已点赞过该帖子')
+  }
 }
 
 const handleCollect = async () => {
   if (!userStore.isLoggedIn) return ElMessage.warning('请先登录')
-  await collectPost(post.value.id)
-  post.value.collectCount++
-  ElMessage.success('已收藏')
+  try {
+    await collectPost(post.value.id)
+    post.value.collectCount++
+    ElMessage.success('已收藏')
+  } catch (e) {
+    // 后端会在用户重复收藏时抛出异常
+  }
 }
 
 const submitComment = async () => {
   if (!userStore.isLoggedIn) return ElMessage.warning('请先登录')
   if (!commentContent.value.trim()) return ElMessage.error('请输入内容')
   
-  await createPostComment({
-    postId: post.value.id,
-    content: commentContent.value
-  })
-  
-  ElMessage.success('回复成功')
-  commentContent.value = ''
-  loadData() // 重新加载以展示新评论
+  try {
+    await createPostComment({
+      postId: post.value.id,
+      content: commentContent.value
+    })
+    
+    ElMessage.success('回复成功')
+    commentContent.value = ''
+    loadData() // 重新加载以展示新评论
+  } catch (e) {
+    console.error('回复失败:', e)
+    ElMessage.error('回复失败，请稍后重试')
+  }
 }
 
 const formatDate = (date) => {
   return new Date(date).toLocaleString()
+}
+
+const handleDeleteComment = async (commentId) => {
+  try {
+    await deletePostComment(commentId)
+    ElMessage.success('删除成功')
+    loadData()
+  } catch (e) {
+    console.error('删除评论失败:', e)
+  }
 }
 
 onMounted(loadData)

@@ -52,17 +52,6 @@
             </div>
             <div v-else>
               <el-form :model="commentForm" ref="commentFormRef">
-                <el-row :gutter="10">
-                  <el-col :span="8">
-                    <el-input v-model="commentForm.nickname" placeholder="昵称（可选）" />
-                  </el-col>
-                  <el-col :span="8">
-                    <el-input v-model="commentForm.email" placeholder="邮箱（可选）" />
-                  </el-col>
-                  <el-col :span="8">
-                    <el-input v-model="commentForm.website" placeholder="网站（可选）" />
-                  </el-col>
-                </el-row>
                 <el-input
                   v-model="commentForm.content"
                   type="textarea"
@@ -71,8 +60,6 @@
                   style="margin-top: 10px;"
                 />
                 <div style="margin-top: 10px; display: flex; gap: 10px; align-items: center;">
-                  <el-input v-model="commentForm.captcha" placeholder="验证码" style="width: 120px;" />
-                  <img :src="captchaImg" @click="refreshCaptcha" style="height: 40px; cursor: pointer;" />
                   <el-button type="primary" @click="submitComment" :loading="submitting">发表评论</el-button>
                 </div>
               </el-form>
@@ -90,6 +77,16 @@
                     <el-tag v-if="comment.isBlogger" size="small" type="danger">博主</el-tag>
                   </span>
                   <span class="comment-time">{{ formatDate(comment.createdAt) }}</span>
+                  <!-- 删除按钮，仅显示给评论作者 -->
+                  <el-button 
+                    v-if="userStore.isLoggedIn && comment.userId === Number(userStore.userInfo.id)" 
+                    type="danger" 
+                    size="small" 
+                    @click="deleteComment(comment.id)"
+                    style="margin-left: auto;"
+                  >
+                    删除
+                  </el-button>
                 </div>
                 <div class="comment-content">{{ comment.content }}</div>
                 <!-- 子评论 -->
@@ -104,6 +101,16 @@
                         </span>
                         <span v-if="child.replyToNickname">回复 @{{ child.replyToNickname }}</span>
                         <span class="comment-time">{{ formatDate(child.createdAt) }}</span>
+                        <!-- 子评论删除按钮，仅显示给评论作者 -->
+                        <el-button 
+                          v-if="userStore.isLoggedIn && child.userId === Number(userStore.userInfo.id)" 
+                          type="danger" 
+                          size="small" 
+                          @click="deleteComment(child.id)"
+                          style="margin-left: auto;"
+                        >
+                          删除
+                        </el-button>
                       </div>
                       <div class="comment-content">{{ child.content }}</div>
                     </div>
@@ -131,11 +138,10 @@
 <script setup>
 import { ref, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getArticle, getRelatedArticles, getArticleComments, likeArticle, unlikeArticle, collectArticle, uncollectArticle, createComment } from '@/api/front'
-import { getCaptcha } from '@/api/auth'
+import { getArticle, getRelatedArticles, getArticleComments, likeArticle, unlikeArticle, collectArticle, uncollectArticle, createComment, deleteComment as deleteCommentApi } from '@/api/front'
 import { useUserStore } from '@/stores/user'
 import { Calendar, View, Folder, Timer, Star, Collection } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import hljs from 'highlight.js'
 import 'highlight.js/styles/github.css'
 
@@ -149,26 +155,14 @@ const toc = ref([])
 const isLiked = ref(false)
 const isCollected = ref(false)
 const submitting = ref(false)
-const captchaImg = ref('')
-const captchaKey = ref('')
 
 const commentForm = ref({
-  nickname: '',
-  email: '',
-  website: '',
-  content: '',
-  captcha: ''
+  content: ''
 })
 
 const formatDate = (dateStr) => {
   if (!dateStr) return ''
   return new Date(dateStr).toLocaleDateString('zh-CN')
-}
-
-const refreshCaptcha = async () => {
-  const res = await getCaptcha()
-  captchaImg.value = res.data.image
-  captchaKey.value = res.data.key
 }
 
 const handleLike = async () => {
@@ -212,19 +206,34 @@ const submitComment = async () => {
   try {
     await createComment({
       articleId: article.value.id,
-      ...commentForm.value,
-      captchaKey: captchaKey.value
+      ...commentForm.value
     })
     ElMessage.success('评论成功')
     commentForm.value.content = ''
-    commentForm.value.captcha = ''
     loadComments()
-    refreshCaptcha()
   } catch (e) {
     console.error(e)
-    refreshCaptcha()
   } finally {
     submitting.value = false
+  }
+}
+
+// 删除评论功能
+const deleteComment = async (commentId) => {
+  try {
+    await ElMessageBox.confirm('确定要删除这条评论吗？', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    
+    await deleteCommentApi(commentId)
+    ElMessage.success('评论已删除')
+    loadComments() // 重新加载评论列表
+  } catch (e) {
+    if (e !== 'cancel') {
+      console.error(e)
+    }
   }
 }
 
@@ -272,9 +281,6 @@ onMounted(async () => {
     
     // 加载评论
     loadComments()
-    
-    // 加载验证码
-    refreshCaptcha()
   } catch (e) {
     console.error(e)
   }

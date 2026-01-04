@@ -57,6 +57,17 @@ public class UserForumController {
     }
 
     /**
+     * 删除自己的回帖
+     */
+    @DeleteMapping("/comments/{id}")
+    public Result<Void> deleteComment(@PathVariable Long id) {
+        String username = getCurrentUsername();
+        UserDTO user = userService.getUserInfo(username);
+        forumService.deleteComment(id, user.getId());
+        return Result.success();
+    }
+
+    /**
      * 点赞帖子
      */
     @PostMapping("/posts/{id}/like")
@@ -82,4 +93,3 @@ public class UserForumController {
         return SecurityContextHolder.getContext().getAuthentication().getName();
     }
 }
-

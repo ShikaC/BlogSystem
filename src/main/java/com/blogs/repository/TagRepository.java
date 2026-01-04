@@ -13,11 +13,17 @@ import java.util.Set;
 @Repository
 public interface TagRepository extends JpaRepository<Tag, Long> {
     Optional<Tag> findByName(String name);
+
     boolean existsByName(String name);
+
     List<Tag> findByIdIn(Set<Long> ids);
+
     List<Tag> findAllByOrderByArticleCountDesc();
-    
+
     @Modifying
     @Query("UPDATE Tag t SET t.articleCount = t.articleCount + :delta WHERE t.id = :id")
     void updateArticleCount(Long id, int delta);
+
+    @Query("SELECT COUNT(a) FROM Article a JOIN a.tags t WHERE t.id = :tagId AND a.status = 1")
+    Long countPublishedArticlesByTagId(Long tagId);
 }

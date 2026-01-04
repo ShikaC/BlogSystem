@@ -1,10 +1,10 @@
 package com.blogs.service;
 
-import com.blogs.dto.UserDTO;
-import com.blogs.dto.UserUpdateRequest;
-import com.blogs.dto.LoginRequest;
 import com.blogs.dto.LoginResponse;
+import com.blogs.dto.UserDTO;
+import com.blogs.dto.LoginRequest;
 import com.blogs.dto.PasswordUpdateRequest;
+import com.blogs.dto.UserUpdateRequest;
 import com.blogs.entity.User;
 import com.blogs.exception.BusinessException;
 import com.blogs.repository.UserRepository;
@@ -13,16 +13,14 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * 用户服务
+ * 用户服务类
  */
 @Service
-@Transactional
 public class UserService {
     
     @Autowired
@@ -33,7 +31,7 @@ public class UserService {
     
     @Autowired
     private JwtUtils jwtUtils;
-    
+
     /**
      * 登录
      */
@@ -56,9 +54,9 @@ public class UserService {
             token = jwtUtils.generateToken(user.getUsername());
         }
         
-        return LoginResponse.of(token, user.getNickname(), user.getAvatar(), user.getRole());
+        return LoginResponse.of(token, user.getId(), user.getNickname(), user.getAvatar(), user.getRole());
     }
-    
+
     /**
      * 注册（默认为普通注册用户）
      */
@@ -75,7 +73,7 @@ public class UserService {
         user.setStatus(1);
         userRepository.save(user);
     }
-    
+
     /**
      * 获取用户信息
      */
@@ -87,7 +85,7 @@ public class UserService {
         BeanUtils.copyProperties(user, dto);
         return dto;
     }
-    
+
     /**
      * 更新用户信息
      */
@@ -119,7 +117,7 @@ public class UserService {
         
         userRepository.save(user);
     }
-    
+
     /**
      * 修改密码
      */

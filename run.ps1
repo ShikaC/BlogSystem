@@ -5,10 +5,10 @@ $OutputEncoding = [System.Text.Encoding]::UTF8
 # 1. 检查 Java 版本
 Write-Host "正在检查 Java 版本..." -ForegroundColor Cyan
 $javaVersion = & java -version 2>&1 | Out-String
-if ($javaVersion -match "17") {
-    Write-Host "Java 17 检查通过" -ForegroundColor Green
+if ($javaVersion -match "1[7-9]|[2-9][0-9]") {
+    Write-Host "Java 版本检查通过" -ForegroundColor Green
 } else {
-    Write-Host "警告: 需要 Java 17，当前版本可能不符。" -ForegroundColor Yellow
+    Write-Host "警告: 建议使用 Java 17 或更高版本，当前版本可能不符。" -ForegroundColor Yellow
 }
 
 # 2. 检查 Maven

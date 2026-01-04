@@ -1,9 +1,9 @@
 <template>
   <div class="about-page">
     <div class="about-card">
-      <el-avatar :size="120" :src="blogger.avatar || undefined">{{ blogger.nickname?.charAt(0) }}</el-avatar>
-      <h1>{{ blogger.nickname || '博主' }}</h1>
-      <p class="bio">{{ blogger.bio || '这个人很懒，什么都没写' }}</p>
+      <el-avatar :size="120" :src="blogger.avatar || undefined">{{ (blogger.displayNickname || '未').charAt(0) }}</el-avatar>
+      <h1>{{ blogger.displayNickname || '未登录' }}</h1>
+      <p class="bio">{{ blogger.bio || '请先登录以查看个人信息' }}</p>
       
       <div class="social-links">
         <a v-if="blogger.github" :href="blogger.github" target="_blank">
@@ -22,14 +22,33 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { getBloggerInfo } from '@/api/front'
+import { getBloggerInfo, getUserInfo } from '@/api/front'
+import { useUserStore } from '@/stores/user'
 import { Link, Message } from '@element-plus/icons-vue'
 
+const userStore = useUserStore()
 const blogger = ref({})
 
 onMounted(async () => {
-  const res = await getBloggerInfo()
-  blogger.value = res.data || {}
+  if (userStore.isLoggedIn) {
+    const res = await getUserInfo()
+    const userData = res.data || {}
+    blogger.value = {
+      ...userData,
+      displayNickname: userStore.displayNickname
+    }
+  } else {
+    // 未登录时显示“未登录”
+    blogger.value = { 
+      displayNickname: '未登录',
+      nickname: '未登录', 
+      bio: '请先登录以查看个人信息', 
+      avatar: null, 
+      github: null, 
+      zhihu: null, 
+      email: null 
+    }
+  }
 })
 </script>
 

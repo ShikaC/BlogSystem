@@ -57,9 +57,9 @@
           <el-dropdown>
             <span class="user-info">
               <el-avatar :size="32" :src="userStore.avatar || undefined">
-                {{ userStore.nickname?.charAt(0) || 'B' }}
+                {{ userStore.displayNickname?.charAt(0) || '未' }}
               </el-avatar>
-              <span class="nickname">{{ userStore.nickname || '博主' }}</span>
+              <span class="nickname">{{ userStore.displayNickname }}</span>
             </span>
             <template #dropdown>
               <el-dropdown-menu>

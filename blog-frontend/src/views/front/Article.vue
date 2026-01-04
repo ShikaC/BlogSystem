@@ -46,31 +46,37 @@
           
           <!-- 发表评论 -->
           <div class="comment-form">
-            <el-form :model="commentForm" ref="commentFormRef">
-              <el-row :gutter="10">
-                <el-col :span="8">
-                  <el-input v-model="commentForm.nickname" placeholder="昵称（可选）" />
-                </el-col>
-                <el-col :span="8">
-                  <el-input v-model="commentForm.email" placeholder="邮箱（可选）" />
-                </el-col>
-                <el-col :span="8">
-                  <el-input v-model="commentForm.website" placeholder="网站（可选）" />
-                </el-col>
-              </el-row>
-              <el-input
-                v-model="commentForm.content"
-                type="textarea"
-                :rows="4"
-                placeholder="说点什么..."
-                style="margin-top: 10px;"
-              />
-              <div style="margin-top: 10px; display: flex; gap: 10px; align-items: center;">
-                <el-input v-model="commentForm.captcha" placeholder="验证码" style="width: 120px;" />
-                <img :src="captchaImg" @click="refreshCaptcha" style="height: 40px; cursor: pointer;" />
-                <el-button type="primary" @click="submitComment" :loading="submitting">发表评论</el-button>
-              </div>
-            </el-form>
+            <div v-if="!userStore.isLoggedIn">
+              <p style="color: #999; margin-bottom: 15px;">您需要登录后才能发表评论</p>
+              <el-button type="primary" @click="router.push('/login')">立即登录</el-button>
+            </div>
+            <div v-else>
+              <el-form :model="commentForm" ref="commentFormRef">
+                <el-row :gutter="10">
+                  <el-col :span="8">
+                    <el-input v-model="commentForm.nickname" placeholder="昵称（可选）" />
+                  </el-col>
+                  <el-col :span="8">
+                    <el-input v-model="commentForm.email" placeholder="邮箱（可选）" />
+                  </el-col>
+                  <el-col :span="8">
+                    <el-input v-model="commentForm.website" placeholder="网站（可选）" />
+                  </el-col>
+                </el-row>
+                <el-input
+                  v-model="commentForm.content"
+                  type="textarea"
+                  :rows="4"
+                  placeholder="说点什么..."
+                  style="margin-top: 10px;"
+                />
+                <div style="margin-top: 10px; display: flex; gap: 10px; align-items: center;">
+                  <el-input v-model="commentForm.captcha" placeholder="验证码" style="width: 120px;" />
+                  <img :src="captchaImg" @click="refreshCaptcha" style="height: 40px; cursor: pointer;" />
+                  <el-button type="primary" @click="submitComment" :loading="submitting">发表评论</el-button>
+                </div>
+              </el-form>
+            </div>
           </div>
 
           <!-- 评论列表 -->
@@ -124,15 +130,18 @@
 
 <script setup>
 import { ref, onMounted, nextTick } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { getArticle, getRelatedArticles, getArticleComments, likeArticle, unlikeArticle, collectArticle, uncollectArticle, createComment } from '@/api/front'
 import { getCaptcha } from '@/api/auth'
+import { useUserStore } from '@/stores/user'
 import { Calendar, View, Folder, Timer, Star, Collection } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import hljs from 'highlight.js'
 import 'highlight.js/styles/github.css'
 
 const route = useRoute()
+const router = useRouter()
+const userStore = useUserStore()
 const article = ref(null)
 const relatedArticles = ref([])
 const comments = ref([])

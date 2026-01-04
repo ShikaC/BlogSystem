@@ -178,6 +178,16 @@ public class UserCenterController {
         return Result.success(PageResult.of(list, p.getTotalElements(), page, size));
     }
 
+    /**
+     * 更新个人信息
+     */
+    @PutMapping("/profile")
+    public Result<Void> updateProfile(@RequestBody com.blogs.dto.UserUpdateRequest request) {
+        String username = getCurrentUsername();
+        userService.updateUserInfo(username, request);
+        return Result.success();
+    }
+
     private String getCurrentUsername() {
         return SecurityContextHolder.getContext().getAuthentication().getName();
     }

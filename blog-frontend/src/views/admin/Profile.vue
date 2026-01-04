@@ -59,8 +59,11 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { getBloggerInfo, updateBloggerInfo, updatePassword } from '@/api/admin'
+import { getUserInfo, updateUserInfo } from '@/api/front'
+import { useUserStore } from '@/stores/user'
 import { ElMessage } from 'element-plus'
 
+const userStore = useUserStore()
 const profile = reactive({})
 const savingProfile = ref(false)
 
@@ -74,15 +77,18 @@ const passwordRules = {
 }
 
 const loadProfile = async () => {
-  const res = await getBloggerInfo()
+  const res = await getUserInfo()
   Object.assign(profile, res.data || {})
 }
 
 const handleSaveProfile = async () => {
   savingProfile.value = true
   try {
-    await updateBloggerInfo(profile)
+    await updateUserInfo(profile)
     ElMessage.success('保存成功')
+    // 更新用户存储中的信息
+    userStore.nickname = profile.nickname
+    userStore.avatar = profile.avatar
   } finally {
     savingProfile.value = false
   }

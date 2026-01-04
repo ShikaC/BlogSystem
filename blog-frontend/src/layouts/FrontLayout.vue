@@ -4,7 +4,7 @@
     <header class="header">
       <div class="container">
         <div class="logo" @click="$router.push('/')">
-          <span>{{ siteName }}</span>
+          <span>{{ siteName || '博客系统' }}</span>
         </div>
         <nav class="nav">
           <router-link to="/" class="nav-item">首页</router-link>
@@ -25,8 +25,8 @@
           <template v-if="userStore.isLoggedIn">
             <el-dropdown @command="handleUserCommand">
               <span class="user-info">
-                <el-avatar :size="32" :src="userStore.userInfo.avatar" />
-                <span class="nickname">{{ userStore.userInfo.nickname }}</span>
+                <el-avatar :size="32" :src="userStore.userInfo.avatar || undefined">{{ userStore.displayNickname?.charAt(0) || 'U' }}</el-avatar>
+                <span class="nickname">{{ userStore.displayNickname }}</span>
               </span>
               <template #dropdown>
                 <el-dropdown-menu>
@@ -98,7 +98,7 @@ const userStore = useUserStore()
 
 const searchKeyword = ref('')
 const showMobileMenu = ref(false)
-const siteName = ref('我的博客')
+const siteName = ref('')
 const siteFooter = ref('')
 const siteIcp = ref('')
 

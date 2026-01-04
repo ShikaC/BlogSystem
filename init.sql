@@ -257,7 +257,7 @@ CREATE TABLE IF NOT EXISTS site_config (
 -- =============================================
 -- 默认管理员: admin / 123456 (BCrypt加密)
 INSERT INTO users (username, password, nickname, role, status) VALUES 
-('admin', '$2a$10$76/yRz.gG8p2.p5M8Nf1XeK.l.u/f7vG5l2Wz5Xk5.p.p.p.p.p.p', '超级管理员', 'ADMIN', 1)
+('admin', '$2b$12$AyzmbsXTz6URch/o5XcMoOFvrQUHJAgf5MXxW/9tjyj78FyhI/qBi', '超级管理员', 'ADMIN', 1)
 ON DUPLICATE KEY UPDATE username = username;
 
 INSERT INTO site_config (config_key, config_value, description) VALUES

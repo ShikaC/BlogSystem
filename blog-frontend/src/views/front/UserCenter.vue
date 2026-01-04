@@ -2,11 +2,12 @@
   <div class="user-center">
     <el-card>
       <div class="user-profile">
-        <el-avatar :size="80" :src="userStore.userInfo.avatar" />
+        <el-avatar :size="80" :src="userStore.userInfo.avatar || undefined">{{ (userStore.displayNickname || '未').charAt(0) }}</el-avatar>
         <div class="user-info">
-          <h2>{{ userStore.userInfo.nickname }}</h2>
+          <h2>{{ userStore.displayNickname }}</h2>
           <p class="role-tag">
-            <el-tag>{{ userStore.isAdmin ? '超级管理员' : '创作者' }}</el-tag>
+            <el-tag v-if="userStore.isLoggedIn">{{ userStore.isAdmin ? '超级管理员' : '创作者' }}</el-tag>
+            <el-tag v-else>未登录</el-tag>
           </p>
         </div>
       </div>

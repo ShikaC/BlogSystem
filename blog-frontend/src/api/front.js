@@ -55,3 +55,7 @@ export const deletePost = (id) => request.delete(`/front/user/forum/posts/${id}`
 export const createPostComment = (data) => request.post('/front/user/forum/comments', data)
 export const likePost = (id) => request.post(`/front/user/forum/posts/${id}/like`)
 export const collectPost = (id) => request.post(`/front/user/forum/posts/${id}/collect`)
+
+// 用户信息 (需要登录)
+export const getUserInfo = () => request.get('/front/user/profile')
+export const updateUserInfo = (data) => request.put('/front/user/profile', data)

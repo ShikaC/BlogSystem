@@ -49,9 +49,9 @@
       <aside class="sidebar">
         <!-- 博主信息 -->
         <div class="widget blogger-card">
-          <el-avatar :size="80" :src="blogger.avatar || undefined">{{ blogger.nickname?.charAt(0) }}</el-avatar>
-          <h3>{{ blogger.nickname || '博主' }}</h3>
-          <p class="bio">{{ blogger.bio || '这个人很懒，什么都没写' }}</p>
+          <el-avatar :size="80" :src="blogger.avatar || undefined">{{ (blogger.nickname || '未').charAt(0) }}</el-avatar>
+          <h3>{{ blogger.nickname || '未登录' }}</h3>
+          <p class="bio">{{ blogger.bio || '请先登录以查看个人信息' }}</p>
         </div>
 
         <!-- 分类 -->
@@ -93,10 +93,12 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { getArticles, getCategories, getTags, getHotArticles, getBloggerInfo } from '@/api/front'
+import { getArticles, getCategories, getTags, getHotArticles, getBloggerInfo, getUserInfo } from '@/api/front'
+import { useUserStore } from '@/stores/user'
 import { Calendar, View, Folder, Loading } from '@element-plus/icons-vue'
 
 const router = useRouter()
+const userStore = useUserStore()
 const articles = ref([])
 const categories = ref([])
 const tags = ref([])
@@ -138,16 +140,44 @@ onMounted(async () => {
   loadArticles()
   
   try {
-    const [catRes, tagRes, hotRes, bloggerRes] = await Promise.all([
+    // 根据登录状态决定加载哪个用户信息
+    if (userStore.isLoggedIn) {
+      try {
+        const userRes = await getUserInfo()
+        const userData = userRes.data || {}
+        // 合并API返回的数据和显示昵称
+        blogger.value = {
+          ...userData,
+          displayNickname: userStore.displayNickname
+        }
+      } catch (err) {
+        console.error('获取用户信息失败:', err)
+        // 使用存储在store中的用户信息作为备选
+        blogger.value = {
+          nickname: userStore.nickname,
+          avatar: userStore.avatar,
+          bio: '个人简介',
+          displayNickname: userStore.displayNickname
+        }
+      }
+    } else {
+      // 未登录时显示“未登录”
+      blogger.value = { 
+        displayNickname: '未登录',
+        nickname: '未登录', 
+        bio: '请先登录以查看个人信息', 
+        avatar: null 
+      }
+    }
+    
+    const [catRes, tagRes, hotRes] = await Promise.all([
       getCategories(),
       getTags(),
-      getHotArticles(10),
-      getBloggerInfo()
+      getHotArticles(10)
     ])
     categories.value = catRes.data || []
     tags.value = tagRes.data || []
     hotArticles.value = hotRes.data || []
-    blogger.value = bloggerRes.data || {}
   } catch (e) {
     console.error(e)
   }

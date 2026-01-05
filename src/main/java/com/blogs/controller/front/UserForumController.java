@@ -79,6 +79,17 @@ public class UserForumController {
     }
 
     /**
+     * 取消点赞帖子
+     */
+    @DeleteMapping("/posts/{id}/like")
+    public Result<Void> unlikePost(@PathVariable Long id) {
+        String username = getCurrentUsername();
+        UserDTO user = userService.getUserInfo(username);
+        forumService.unlikePost(user.getId(), id);
+        return Result.success();
+    }
+
+    /**
      * 收藏帖子
      */
     @PostMapping("/posts/{id}/collect")
@@ -87,6 +98,27 @@ public class UserForumController {
         UserDTO user = userService.getUserInfo(username);
         forumService.collectPost(user.getId(), id);
         return Result.success();
+    }
+
+    /**
+     * 取消收藏帖子
+     */
+    @DeleteMapping("/posts/{id}/collect")
+    public Result<Void> uncollectPost(@PathVariable Long id) {
+        String username = getCurrentUsername();
+        UserDTO user = userService.getUserInfo(username);
+        forumService.uncollectPost(user.getId(), id);
+        return Result.success();
+    }
+
+    /**
+     * 获取用户对帖子的状态（点赞/收藏）
+     */
+    @GetMapping("/posts/{id}/status")
+    public Result<java.util.Map<String, Boolean>> checkStatus(@PathVariable Long id) {
+        String username = getCurrentUsername();
+        UserDTO user = userService.getUserInfo(username);
+        return Result.success(forumService.checkStatus(user.getId(), id));
     }
 
     private String getCurrentUsername() {

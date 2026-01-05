@@ -319,6 +319,20 @@ public class ForumService {
         }
     }
 
+    public void unlikePost(Long userId, Long postId) {
+        if (userId == null || postId == null)
+            return;
+
+        likeRecordRepository.findByUserIdAndTargetIdAndType(userId, postId, "POST")
+                .ifPresent(record -> {
+                    likeRecordRepository.delete(record);
+                    postRepository.findById(postId).ifPresent(post -> {
+                        post.setLikeCount(Math.max(0, post.getLikeCount() - 1));
+                        postRepository.save(post);
+                    });
+                });
+    }
+
     public void collectPost(Long userId, Long postId) {
         if (userId == null) {
             throw new BusinessException("用户ID不能为空");
@@ -339,6 +353,33 @@ public class ForumService {
                 .orElseThrow(() -> new BusinessException("帖子不存在"));
         post.setCollectCount(post.getCollectCount() + 1);
         postRepository.save(post);
+    }
+
+    public void uncollectPost(Long userId, Long postId) {
+        if (userId == null || postId == null)
+            return;
+
+        favoriteRepository.findByUserIdAndTargetIdAndType(userId, postId, "POST")
+                .ifPresent(fav -> {
+                    favoriteRepository.delete(fav);
+                    postRepository.findById(postId).ifPresent(post -> {
+                        post.setCollectCount(Math.max(0, post.getCollectCount() - 1));
+                        postRepository.save(post);
+                    });
+                });
+    }
+
+    public java.util.Map<String, Boolean> checkStatus(Long userId, Long postId) {
+        if (userId == null || postId == null)
+            return java.util.Collections.emptyMap();
+
+        boolean isLiked = likeRecordRepository.findByUserIdAndTargetIdAndType(userId, postId, "POST").isPresent();
+        boolean isCollected = favoriteRepository.findByUserIdAndTargetIdAndType(userId, postId, "POST").isPresent();
+
+        java.util.Map<String, Boolean> result = new java.util.HashMap<>();
+        result.put("isLiked", isLiked);
+        result.put("isCollected", isCollected);
+        return result;
     }
 
     public PageResult<ForumPost> getMyPosts(Long userId, Integer page, Integer size) {

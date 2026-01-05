@@ -57,7 +57,10 @@ export const getForumPostComments = (id, params) => request.get(`/front/forum/po
 export const savePost = (data) => request.post('/front/user/forum/posts', data)
 export const deletePost = (id) => request.delete(`/front/user/forum/posts/${id}`)
 export const likePost = (id) => request.post(`/front/user/forum/posts/${id}/like`)
+export const unlikePost = (id) => request.delete(`/front/user/forum/posts/${id}/like`)
 export const collectPost = (id) => request.post(`/front/user/forum/posts/${id}/collect`)
+export const uncollectPost = (id) => request.delete(`/front/user/forum/posts/${id}/collect`)
+export const checkPostStatus = (id) => request.get(`/front/user/forum/posts/${id}/status`)
 export const createPostComment = (data) => request.post('/front/user/forum/comments', data)
 export const deletePostComment = (id) => request.delete(`/front/user/forum/comments/${id}`)
 

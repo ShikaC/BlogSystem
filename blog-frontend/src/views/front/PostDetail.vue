@@ -24,8 +24,12 @@
       <div class="post-content" v-html="post.content"></div>
 
       <div class="post-actions">
-        <el-button type="primary" link @click="handleLike">点赞 ({{ post.likeCount }})</el-button>
-        <el-button type="primary" link @click="handleCollect">收藏 ({{ post.collectCount }})</el-button>
+        <el-button :type="post.isLiked ? 'success' : 'primary'" link @click="handleLike">
+          {{ post.isLiked ? '已点赞' : '点赞' }} ({{ post.likeCount }})
+        </el-button>
+        <el-button :type="post.isCollected ? 'warning' : 'primary'" link @click="handleCollect">
+          {{ post.isCollected ? '已收藏' : '收藏' }} ({{ post.collectCount }})
+        </el-button>
       </div>
     </div>
 
@@ -71,7 +75,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getForumPost, getForumPostComments, createPostComment, deletePostComment, likePost, collectPost } from '@/api/front'
+import { getForumPost, getForumPostComments, createPostComment, deletePostComment, likePost, unlikePost, collectPost, uncollectPost, checkPostStatus } from '@/api/front'
 import { useUserStore } from '@/stores/user'
 import { ElMessage } from 'element-plus'
 
@@ -95,6 +99,17 @@ const loadData = async () => {
     } catch (e) {
       console.error('加载评论失败:', e)
       comments.value = []
+    }
+    
+    // 加载状态（是否点赞/收藏）
+    if (userStore.isLoggedIn) {
+      try {
+        const statusRes = await checkPostStatus(id)
+        post.value.isLiked = statusRes.data.isLiked
+        post.value.isCollected = statusRes.data.isCollected
+      } catch (e) {
+        console.error('加载状态失败:', e)
+      }
     }
   } catch (e) {
     console.error('加载帖子失败:', e)
@@ -122,23 +137,38 @@ const goToAuthorPage = () => {
 const handleLike = async () => {
   if (!userStore.isLoggedIn) return ElMessage.warning('请先登录')
   try {
-    await likePost(post.value.id)
-    post.value.likeCount++
-    ElMessage.success('已点赞')
+    if (post.value.isLiked) {
+      await unlikePost(post.value.id)
+      post.value.likeCount = Math.max(0, post.value.likeCount - 1)
+      post.value.isLiked = false
+      ElMessage.success('已取消点赞')
+    } else {
+      await likePost(post.value.id)
+      post.value.likeCount++
+      post.value.isLiked = true
+      ElMessage.success('已点赞')
+    }
   } catch (e) {
-    // 后端会在用户重复点赞时静默处理
-    ElMessage.info('您已点赞过该帖子')
+    console.error(e)
   }
 }
 
 const handleCollect = async () => {
   if (!userStore.isLoggedIn) return ElMessage.warning('请先登录')
   try {
-    await collectPost(post.value.id)
-    post.value.collectCount++
-    ElMessage.success('已收藏')
+    if (post.value.isCollected) {
+      await uncollectPost(post.value.id)
+      post.value.collectCount = Math.max(0, post.value.collectCount - 1)
+      post.value.isCollected = false
+      ElMessage.success('已取消收藏')
+    } else {
+      await collectPost(post.value.id)
+      post.value.collectCount++
+      post.value.isCollected = true
+      ElMessage.success('已收藏')
+    }
   } catch (e) {
-    // 后端会在用户重复收藏时抛出异常
+    console.error(e)
   }
 }
 

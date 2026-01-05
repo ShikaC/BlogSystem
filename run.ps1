@@ -40,7 +40,7 @@ if (-not (Test-Path "uploads")) {
 }
 
 # 5. 启动后端
-Write-Host "正在启动后端服务 (端口 8082)..." -ForegroundColor Cyan
+Write-Host "正在启动后端服务 (端口 8080)..." -ForegroundColor Cyan
 Start-Process powershell -ArgumentList "-NoExit", "-Command", "$mvnCmd spring-boot:run" -WindowStyle Normal
 
 # 6. 启动前端
@@ -54,7 +54,7 @@ Start-Process powershell -ArgumentList "-NoExit", "-Command", "npm run dev" -Win
 
 Write-Host "`n====================================================" -ForegroundColor Green
 Write-Host "项目启动指令已发送！" -ForegroundColor Green
-Write-Host "后端 API: http://localhost:8082/api" -ForegroundColor Green
+Write-Host "后端 API: http://localhost:8080/api" -ForegroundColor Green
 Write-Host "前端地址: http://localhost:3000" -ForegroundColor Green
 Write-Host "====================================================" -ForegroundColor Green
 Write-Host "注意：请确保 MySQL 已启动并创建了 blog_db 数据库。" -ForegroundColor Yellow

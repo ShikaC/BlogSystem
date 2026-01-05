@@ -8,8 +8,14 @@
     <div class="post-container">
       <div class="post-header">
         <h1>{{ post.title }}</h1>
+        <!-- 作者信息 -->
+        <div class="author-info" v-if="post.userNickname || post.userId">
+          <el-avatar :size="32" :src="post.userAvatar || undefined">
+            {{ (post.userNickname || '匿').charAt(0) }}
+          </el-avatar>
+          <span class="author-name clickable" @click="goToAuthorPage">{{ post.userNickname || `用户${post.userId}` }}</span>
+        </div>
         <div class="post-meta">
-          <span>作者 ID: {{ post.userId }}</span>
           <span>发布于: {{ formatDate(post.createdAt) }}</span>
           <span>阅读: {{ post.viewCount }}</span>
         </div>
@@ -96,6 +102,13 @@ const loadData = async () => {
   }
 }
 
+// 跳转到作者主页
+const goToAuthorPage = () => {
+  if (post.value.userId) {
+    router.push(`/user/profile?userId=${post.value.userId}`)
+  }
+}
+
 const handleLike = async () => {
   if (!userStore.isLoggedIn) return ElMessage.warning('请先登录')
   try {
@@ -172,6 +185,29 @@ onMounted(loadData)
 .post-header h1 {
   margin: 0 0 15px 0;
   color: var(--text-color, #303133);
+}
+
+.author-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+  padding: 10px 0;
+}
+
+.author-name {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-color, #333);
+}
+
+.author-name.clickable {
+  cursor: pointer;
+  transition: color 0.3s;
+}
+
+.author-name.clickable:hover {
+  color: #409eff;
 }
 
 .post-meta {

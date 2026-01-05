@@ -25,6 +25,13 @@
               </el-button>
             </div>
           </div>
+          <!-- 作者信息 -->
+          <div class="author-info" v-if="article.userNickname || article.userId">
+            <el-avatar :size="32" :src="article.userAvatar || undefined">
+              {{ (article.userNickname || '匿').charAt(0) }}
+            </el-avatar>
+            <span class="author-name clickable" @click="goToAuthorPage">{{ article.userNickname || `用户${article.userId}` }}</span>
+          </div>
           <div class="article-meta">
             <span><el-icon><Calendar /></el-icon> 发布于 {{ formatDate(article.createdAt) }}</span>
             <span v-if="article.updatedAt && article.updatedAt !== article.createdAt"><el-icon><Edit /></el-icon> 最后编辑 {{ formatDate(article.updatedAt) }}</span>
@@ -39,7 +46,7 @@
           </div>
         </header>
 
-        <div class="article-content" v-html="article.content"></div>
+        <div class="article-content" v-html="renderedContent"></div>
 
         <!-- 互动 -->
         <div class="article-actions">
@@ -157,7 +164,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted, nextTick, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getArticle, getRelatedArticles, getArticleComments, likeArticle, unlikeArticle, collectArticle, uncollectArticle, createComment, deleteComment as deleteCommentApi } from '@/api/front'
 import { deleteArticle } from '@/api/admin'
@@ -166,6 +173,19 @@ import { Calendar, View, Folder, Timer, Star, Collection, Delete, Edit } from '@
 import { ElMessage, ElMessageBox } from 'element-plus'
 import hljs from 'highlight.js'
 import 'highlight.js/styles/github.css'
+import { marked } from 'marked'
+
+// 配置 marked
+marked.setOptions({
+  highlight: function(code, lang) {
+    if (lang && hljs.getLanguage(lang)) {
+      return hljs.highlight(code, { language: lang }).value
+    }
+    return hljs.highlightAuto(code).value
+  },
+  breaks: true,
+  gfm: true
+})
 
 const route = useRoute()
 const router = useRouter()
@@ -180,6 +200,19 @@ const submitting = ref(false)
 
 const commentForm = ref({
   content: ''
+})
+
+// 渲染 Markdown 内容为 HTML
+const renderedContent = computed(() => {
+  if (!article.value || !article.value.content) return ''
+  try {
+    // 使用 marked 将 Markdown 转换为 HTML
+    return marked.parse(article.value.content)
+  } catch (e) {
+    console.error('Markdown 解析失败:', e)
+    // 如果解析失败，返回原始内容
+    return article.value.content
+  }
 })
 
 const formatDate = (dateStr) => {
@@ -284,6 +317,13 @@ const handleEditArticle = () => {
   router.push(`/user/article/edit/${article.value.id}`)
 }
 
+// 跳转到作者主页
+const goToAuthorPage = () => {
+  if (article.value.userId) {
+    router.push(`/user/profile?userId=${article.value.userId}`)
+  }
+}
+
 const loadComments = async () => {
   const res = await getArticleComments(route.params.id)
   comments.value = res.data || []
@@ -362,6 +402,24 @@ onMounted(async () => {
 .action-buttons {
   display: flex;
   gap: 10px;
+}
+
+.author-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+  padding: 10px 0;
+}
+
+.author-name {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-color, #333);
+}
+
+.author-name.clickable:hover {
+  color: #409eff;
 }
 
 .article-header h1 {

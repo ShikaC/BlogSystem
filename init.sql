@@ -23,6 +23,8 @@ CREATE TABLE IF NOT EXISTS users (
     github VARCHAR(200) COMMENT 'GitHub地址',
     zhihu VARCHAR(200) COMMENT '知乎地址',
     weixin VARCHAR(100) COMMENT '微信',
+    likes_public BOOLEAN DEFAULT TRUE COMMENT '点赞列表是否公开',
+    favorites_public BOOLEAN DEFAULT TRUE COMMENT '收藏列表是否公开',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     INDEX idx_username (username),

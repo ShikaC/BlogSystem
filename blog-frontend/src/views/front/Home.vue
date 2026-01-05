@@ -15,6 +15,9 @@
             <p class="article-summary">{{ article.summary }}</p>
             <div class="article-meta">
               <span><el-icon><Calendar /></el-icon> {{ formatDate(article.createdAt) }}</span>
+              <span v-if="article.authorNickname" @click.stop="router.push(`/user/${article.userId}`)" class="author-link" style="cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                <el-icon><User /></el-icon> {{ article.authorNickname }}
+              </span>
               <span><el-icon><View /></el-icon> {{ article.viewCount }}</span>
               <span v-if="article.categoryName"><el-icon><Folder /></el-icon> {{ article.categoryName }}</span>
             </div>
@@ -95,7 +98,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { getArticles, getCategories, getTags, getHotArticles, getBloggerInfo, getUserInfo } from '@/api/front'
 import { useUserStore } from '@/stores/user'
-import { Calendar, View, Folder, Loading } from '@element-plus/icons-vue'
+import { Calendar, View, Folder, Loading, User } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const userStore = useUserStore()

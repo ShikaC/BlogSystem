@@ -34,7 +34,7 @@ public class ForumController {
      * 获取板块下的帖子列表
      */
     @GetMapping("/posts")
-    public Result<PageResult<ForumPost>> getPosts(
+    public Result<PageResult<ForumPostVO>> getPosts(
             @RequestParam Long sectionId,
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "10") Integer size) {

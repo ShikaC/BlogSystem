@@ -92,13 +92,22 @@ public class ForumService {
         return postRepository.save(post);
     }
 
-    public PageResult<ForumPost> getPostList(Long sectionId, Integer page, Integer size) {
+    public PageResult<ForumPostVO> getPostList(Long sectionId, Integer page, Integer size) {
         if (sectionId == null) {
             throw new BusinessException("板块ID不能为空");
         }
-        Pageable pageable = PageRequest.of(page - 1, size);
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "isTop", "createdAt"));
         Page<ForumPost> postPage = postRepository.findBySectionIdAndStatus(sectionId, 1, pageable);
-        return PageResult.of(postPage.getContent(), postPage.getTotalElements(), page, size);
+
+        List<ForumPostVO> vos = postPage.getContent().stream().map(post -> {
+            User user = null;
+            if (post.getUserId() != null) {
+                user = userRepository.findById(post.getUserId()).orElse(null);
+            }
+            return ForumPostVO.fromEntity(post, user);
+        }).toList();
+
+        return PageResult.of(vos, postPage.getTotalElements(), page, size);
     }
 
     public ForumPostVO getPost(Long id) {

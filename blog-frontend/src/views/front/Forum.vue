@@ -17,7 +17,7 @@
                 {{ post.title }}
               </h3>
               <div class="post-meta">
-                <span>作者: {{ post.userId }}</span> <!-- 实际应展示昵称 -->
+                <span><el-icon><User /></el-icon> {{ post.userNickname || '匿名用户' }}</span>
                 <span>发布于: {{ formatDate(post.createdAt) }}</span>
                 <span>查看: {{ post.viewCount }}</span>
                 <span>回复: {{ post.commentCount }}</span>
@@ -65,7 +65,7 @@ import { ref, onMounted, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { getForumSections, getForumPosts, savePost } from '@/api/front'
 import { useUserStore } from '@/stores/user'
-import { Plus } from '@element-plus/icons-vue'
+import { Plus, User } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 
 const router = useRouter()

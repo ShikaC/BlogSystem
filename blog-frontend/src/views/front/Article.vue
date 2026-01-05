@@ -692,4 +692,55 @@ onMounted(loadArticle)
     gap: 10px;
   }
 }
+
+/* 处理 Markdown 内容样式 */
+:deep(.article-content) {
+  line-height: 1.8;
+  color: var(--text-color, #333);
+}
+
+:deep(.article-content h1),
+:deep(.article-content h2),
+:deep(.article-content h3),
+:deep(.article-content h4),
+:deep(.article-content h5),
+:deep(.article-content h6) {
+  margin-top: 1.5em;
+  margin-bottom: 0.8em;
+  font-weight: 600;
+  color: var(--text-color, #333);
+  /* 修复锚点定位被顶部导航栏遮挡的问题 */
+  scroll-margin-top: 80px;
+}
+
+:deep(.article-content p) {
+  margin-bottom: 1.2em;
+}
+
+:deep(.article-content img) {
+  max-width: 100%;
+  border-radius: 4px;
+  margin: 10px 0;
+}
+
+:deep(.article-content blockquote) {
+  margin: 1em 0;
+  padding: 0.8em 1.2em;
+  border-left: 4px solid #409eff;
+  background-color: var(--blockquote-bg, #f4f4f5);
+  color: #666;
+  border-radius: 2px;
+}
+
+:deep(.article-content pre) {
+  background-color: #f6f8fa;
+  padding: 16px;
+  border-radius: 6px;
+  overflow: auto;
+  margin-bottom: 1.2em;
+}
+
+:deep(.article-content code) {
+  font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+}
 </style>

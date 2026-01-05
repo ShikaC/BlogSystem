@@ -25,10 +25,10 @@ import java.util.Arrays;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
-    
+
     @Autowired
     private JwtAuthenticationFilter jwtAuthenticationFilter;
-    
+
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -43,31 +43,35 @@ public class SecurityConfig {
     public UserDetailsService userDetailsService() {
         return new InMemoryUserDetailsManager();
     }
-    
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .csrf(csrf -> csrf.disable())
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                // 公开接口 - 前台访问
-                .requestMatchers("/front/user/info").permitAll()  // 允许获取用户信息无需认证
-                .requestMatchers("/front/user/**").authenticated()
-                .requestMatchers("/front/comments/**").authenticated()
-                .requestMatchers("/front/**").permitAll()
-                .requestMatchers("/auth/**").permitAll()
-                .requestMatchers("/captcha/**").permitAll()
-                .requestMatchers("/uploads/**").permitAll()
-                // 后台管理接口需要管理员权限
-                .requestMatchers("/admin/**").hasAuthority("ADMIN")
-                .anyRequest().permitAll()
-            )
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-        
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        // 公开接口 - 前台访问
+                        .requestMatchers("/front/user/info").permitAll() // 允许获取用户信息无需认证
+                        .requestMatchers("/front/user/**").authenticated()
+                        .requestMatchers("/front/comments/**").authenticated()
+                        .requestMatchers("/front/**").permitAll()
+                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/captcha/**").permitAll()
+                        .requestMatchers("/uploads/**").permitAll()
+                        // 允许认证用户访问文章编辑相关接口
+                        .requestMatchers("/admin/articles/**").authenticated() // 文章的增删改查
+                        .requestMatchers("/admin/categories").authenticated() // 获取分类列表（编辑文章时需要）
+                        .requestMatchers("/admin/tags").authenticated() // 获取标签列表（编辑文章时需要）
+                        .requestMatchers("/admin/media/**").authenticated() // 媒体上传
+                        // 其他后台管理接口需要管理员权限
+                        .requestMatchers("/admin/**").hasAuthority("ADMIN")
+                        .anyRequest().permitAll())
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
-    
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
@@ -76,7 +80,7 @@ public class SecurityConfig {
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
-        
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;

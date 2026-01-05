@@ -14,12 +14,22 @@
 
             <el-form-item label="文章内容" prop="content">
               <div class="editor-wrapper">
-                <el-input
-                  v-model="form.content"
-                  type="textarea"
-                  :rows="20"
-                  placeholder="请输入文章内容（支持HTML）"
-                />
+                <div class="editor-toolbar">
+                  <span class="toolbar-tip">📝 支持 Markdown 语法</span>
+                  <el-button size="small" @click="showPreview = !showPreview">
+                    {{ showPreview ? '隐藏预览' : '显示预览' }}
+                  </el-button>
+                </div>
+                <div class="editor-container" :class="{ 'split-view': showPreview }">
+                  <el-input
+                    v-model="form.content"
+                    type="textarea"
+                    :rows="20"
+                    placeholder="请输入文章内容（支持Markdown）&#10;&#10;# 标题1&#10;## 标题2&#10;**粗体** *斜体*&#10;[链接](https://example.com)&#10;![图片](url)&#10;```代码块```"
+                    class="markdown-editor"
+                  />
+                  <div v-if="showPreview" class="markdown-preview" v-html="markdownPreview"></div>
+                </div>
               </div>
             </el-form-item>
 
@@ -93,6 +103,21 @@ import { ref, reactive, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getAdminArticle, saveArticle, getAdminCategories, getAdminTags } from '@/api/admin'
 import { ElMessage } from 'element-plus'
+import { marked } from 'marked'
+import hljs from 'highlight.js'
+import 'highlight.js/styles/github.css'
+
+// 配置 marked
+marked.setOptions({
+  highlight: function(code, lang) {
+    if (lang && hljs.getLanguage(lang)) {
+      return hljs.highlight(code, { language: lang }).value
+    }
+    return hljs.highlightAuto(code).value
+  },
+  breaks: true,
+  gfm: true
+})
 
 const route = useRoute()
 const router = useRouter()
@@ -101,8 +126,20 @@ const formRef = ref()
 const saving = ref(false)
 const categories = ref([])
 const tags = ref([])
+const showPreview = ref(false)
 
 const isEdit = computed(() => !!route.params.id)
+
+// Markdown 预览
+const markdownPreview = computed(() => {
+  if (!form.content) return ''
+  try {
+    return marked.parse(form.content)
+  } catch (e) {
+    return '预览解析失败'
+  }
+})
+
 
 const form = reactive({
   id: null,
@@ -186,9 +223,101 @@ onMounted(async () => {
   width: 100%;
 }
 
+.editor-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background: #f5f7fa;
+  border: 1px solid #dcdfe6;
+  border-bottom: none;
+  border-radius: 4px 4px 0 0;
+}
+
+.toolbar-tip {
+  font-size: 14px;
+  color: #606266;
+}
+
+.editor-container {
+  display: flex;
+  gap: 10px;
+}
+
+.editor-container.split-view .markdown-editor {
+  width: 50%;
+}
+
+.markdown-editor :deep(textarea) {
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  line-height: 1.6;
+}
+
+.markdown-preview {
+  width: 50%;
+  padding: 15px;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  background: #fff;
+  max-height: 500px;
+  overflow-y: auto;
+  line-height: 1.8;
+}
+
+.markdown-preview :deep(h1),
+.markdown-preview :deep(h2),
+.markdown-preview :deep(h3) {
+  margin-top: 20px;
+  margin-bottom: 10px;
+}
+
+.markdown-preview :deep(pre) {
+  background: #f6f8fa;
+  padding: 15px;
+  border-radius: 6px;
+  overflow-x: auto;
+}
+
+.markdown-preview :deep(code) {
+  background: #f6f8fa;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+}
+
+.markdown-preview :deep(blockquote) {
+  border-left: 4px solid #409eff;
+  padding-left: 15px;
+  margin: 15px 0;
+  color: #666;
+}
+
+.markdown-preview :deep(img) {
+  max-width: 100%;
+  border-radius: 4px;
+}
+
+.markdown-preview :deep(table) {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 15px 0;
+}
+
+.markdown-preview :deep(table th),
+.markdown-preview :deep(table td) {
+  border: 1px solid #ddd;
+  padding: 8px 12px;
+}
+
+.markdown-preview :deep(table th) {
+  background: #f5f7fa;
+  font-weight: bold;
+}
+
 .publish-actions {
   display: flex;
   gap: 10px;
   justify-content: flex-end;
 }
 </style>
+```

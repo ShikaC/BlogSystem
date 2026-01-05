@@ -171,12 +171,12 @@ onMounted(loadData)
 
 .post-header h1 {
   margin: 0 0 15px 0;
-  color: #303133;
+  color: var(--text-color, #303133);
 }
 
 .post-meta {
   font-size: 13px;
-  color: #909399;
+  color: var(--meta-color, #909399);
   margin-bottom: 20px;
   display: flex;
   gap: 20px;
@@ -184,13 +184,13 @@ onMounted(loadData)
 
 .post-content {
   line-height: 1.8;
-  color: #444;
+  color: var(--content-color, #444);
   margin-bottom: 30px;
   white-space: pre-wrap;
 }
 
 .post-actions {
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--border-color, #eee);
   padding-top: 20px;
 }
 
@@ -200,6 +200,10 @@ onMounted(loadData)
   padding: 30px;
   border-radius: 8px;
   box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+}
+
+.comment-section h3 {
+  color: var(--text-color, #303133);
 }
 
 .comment-input {
@@ -213,7 +217,7 @@ onMounted(loadData)
 
 .comment-item {
   padding: 15px 0;
-  border-bottom: 1px solid #f2f6fc;
+  border-bottom: 1px solid var(--border-light, #f2f6fc);
 }
 
 .comment-info {
@@ -228,12 +232,30 @@ onMounted(loadData)
 }
 
 .comment-time {
-  color: #909399;
+  color: var(--meta-color, #909399);
 }
 
 .comment-text {
-  color: #606266;
+  color: var(--content-color, #606266);
   line-height: 1.6;
 }
+
+.empty-comments {
+  text-align: center;
+  padding: 40px;
+  color: var(--meta-color, #909399);
+}
+
+/* 夜间模式样式 */
+:deep(.dark) .post-detail-page,
+.dark .post-detail-page {
+  --card-bg: #16213e;
+  --text-color: #e0e0e0;
+  --content-color: #c0c0c0;
+  --meta-color: #8899aa;
+  --border-color: #2a3f5f;
+  --border-light: #2a3f5f;
+}
 </style>
+
 

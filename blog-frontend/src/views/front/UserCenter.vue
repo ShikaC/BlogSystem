@@ -55,8 +55,49 @@
           </el-table>
         </el-tab-pane>
 
+        <!-- 点赞的文章 -->
+        <el-tab-pane label="点赞文章" name="liked">
+          <el-table :data="likedArticles" v-loading="loading">
+            <el-table-column prop="title" label="标题">
+              <template #default="{ row }">
+                <span class="clickable" @click="$router.push(`/article/${row.targetId}`)">{{ row.title }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="contentType" label="类型" width="100">
+              <template #default="{ row }">
+                <el-tag size="small" type="info">{{ row.contentType === 'ARTICLE' ? '文章' : '帖子' }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="createdAt" label="点赞时间" width="180">
+              <template #default="{ row }">{{ formatDate(row.createdAt) }}</template>
+            </el-table-column>
+          </el-table>
+          <div v-if="likedArticles.length === 0" class="empty-tip">暂无点赞的文章</div>
+        </el-tab-pane>
+
+        <!-- 收藏的文章 -->
+        <el-tab-pane label="收藏文章" name="collected">
+          <el-table :data="collectedArticles" v-loading="loading">
+            <el-table-column prop="title" label="标题">
+              <template #default="{ row }">
+                <span class="clickable" @click="$router.push(`/article/${row.targetId}`)">{{ row.title }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="contentType" label="类型" width="100">
+              <template #default="{ row }">
+                <el-tag size="small" type="success">{{ row.contentType === 'ARTICLE' ? '文章' : '帖子' }}</el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column prop="createdAt" label="收藏时间" width="180">
+              <template #default="{ row }">{{ formatDate(row.createdAt) }}</template>
+            </el-table-column>
+          </el-table>
+          <div v-if="collectedArticles.length === 0" class="empty-tip">暂无收藏的文章</div>
+        </el-tab-pane>
+
         <!-- 消息中心 -->
         <el-tab-pane label="消息通知" name="notifications">
+          <div v-if="notifications.length === 0" class="empty-tip">暂无消息通知</div>
           <div v-for="n in notifications" :key="n.id" class="notice-item" :class="{ unread: !n.isRead }">
             <div class="notice-header">
               <span class="notice-type">{{ n.type }}</span>
@@ -92,7 +133,7 @@
 import { ref, onMounted, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
-import { getMyArticles, getMyPosts, getMyNotifications, getUserProfile, deletePost } from '@/api/front'
+import { getMyArticles, getMyPosts, getMyNotifications, getUserProfile, deletePost, getMyLikedArticles, getMyCollectedArticles } from '@/api/front'
 import { deleteArticle } from '@/api/admin' // 注册用户也能删自己的
 import { ElMessage, ElMessageBox } from 'element-plus'
 
@@ -103,6 +144,8 @@ const activeTab = ref('articles')
 const loading = ref(false)
 const articles = ref([])
 const posts = ref([])
+const likedArticles = ref([])
+const collectedArticles = ref([])
 const notifications = ref([])
 const profileForm = reactive({
   nickname: '',
@@ -120,16 +163,28 @@ const statusMap = {
 const loadData = async () => {
   loading.value = true
   try {
-    const [artRes, postRes, noticeRes, profileRes] = await Promise.all([
+    const [artRes, postRes, likedRes, collectedRes, noticeRes, profileRes] = await Promise.allSettled([
       getMyArticles({ page: 1, size: 50 }),
       getMyPosts({ page: 1, size: 50 }),
+      getMyLikedArticles({ page: 1, size: 50 }),
+      getMyCollectedArticles({ page: 1, size: 50 }),
       getMyNotifications({ page: 1, size: 50 }),
       getUserProfile()
     ])
-    articles.value = artRes.data.list
-    posts.value = postRes.data.list
-    notifications.value = noticeRes.data.list
-    Object.assign(profileForm, profileRes.data)
+    
+    // 安全地获取数据，即使某个接口失败也不影响其他数据
+    articles.value = artRes.status === 'fulfilled' && artRes.value?.data?.list ? artRes.value.data.list : []
+    posts.value = postRes.status === 'fulfilled' && postRes.value?.data?.list ? postRes.value.data.list : []
+    likedArticles.value = likedRes.status === 'fulfilled' && likedRes.value?.data?.list ? likedRes.value.data.list : []
+    collectedArticles.value = collectedRes.status === 'fulfilled' && collectedRes.value?.data?.list ? collectedRes.value.data.list : []
+    notifications.value = noticeRes.status === 'fulfilled' && noticeRes.value?.data?.list ? noticeRes.value.data.list : []
+    
+    if (profileRes.status === 'fulfilled' && profileRes.value?.data) {
+      Object.assign(profileForm, profileRes.value.data)
+    }
+  } catch (e) {
+    console.error('加载用户中心数据失败:', e)
+    ElMessage.error('加载数据失败，请稍后重试')
   } finally {
     loading.value = false
   }
@@ -184,11 +239,12 @@ onMounted(loadData)
 
 .user-info h2 {
   margin: 0 0 10px 0;
+  color: var(--text-color, #333);
 }
 
 .user-bio {
   margin: 5px 0 0 0;
-  color: #666;
+  color: var(--bio-color, #666);
   font-size: 14px;
   line-height: 1.5;
   word-break: break-word;
@@ -198,13 +254,32 @@ onMounted(loadData)
   margin-top: 20px;
 }
 
+.clickable {
+  cursor: pointer;
+  color: var(--link-color, #409eff);
+  transition: color 0.3s;
+}
+
+.clickable:hover {
+  color: #66b1ff;
+  text-decoration: underline;
+}
+
+.empty-tip {
+  text-align: center;
+  padding: 40px;
+  color: var(--meta-color, #999);
+  font-size: 14px;
+}
+
 .notice-item {
   padding: 15px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border-color, #eee);
+  background: var(--card-bg, #fff);
 }
 
 .notice-item.unread {
-  background: #fdf6ec;
+  background: var(--unread-bg, #fdf6ec);
 }
 
 .notice-header {
@@ -220,6 +295,68 @@ onMounted(loadData)
 }
 
 .notice-time {
-  color: #909399;
+  color: var(--meta-color, #909399);
+}
+
+.notice-body {
+  color: var(--text-color, #333);
+  line-height: 1.6;
+}
+
+/* 夜间模式样式 */
+:deep(.dark) .user-center,
+.dark .user-center {
+  --card-bg: #16213e;
+  --text-color: #e0e0e0;
+  --bio-color: #a0a0a0;
+  --meta-color: #8899aa;
+  --border-color: #2a3f5f;
+  --link-color: #66b1ff;
+  --unread-bg: #2a3f5f;
+}
+
+/* 让 el-card 和 el-tabs 适配夜间模式 */
+:deep(.dark) .user-center .el-card {
+  background-color: #16213e;
+  border-color: #2a3f5f;
+}
+
+:deep(.dark) .user-center .el-tabs {
+  background-color: #16213e;
+}
+
+:deep(.dark) .user-center .el-tabs__header {
+  background-color: #16213e;
+  border-color: #2a3f5f;
+}
+
+:deep(.dark) .user-center .el-tabs__item {
+  color: #a0a0a0;
+}
+
+:deep(.dark) .user-center .el-tabs__item.is-active {
+  color: #66b1ff;
+}
+
+:deep(.dark) .user-center .el-table {
+  background-color: #16213e;
+  color: #e0e0e0;
+}
+
+:deep(.dark) .user-center .el-table th {
+  background-color: #1a2942;
+  color: #e0e0e0;
+}
+
+:deep(.dark) .user-center .el-table tr {
+  background-color: #16213e;
+}
+
+:deep(.dark) .user-center .el-table td {
+  border-color: #2a3f5f;
+}
+
+:deep(.dark) .user-center .el-table__body tr:hover > td {
+  background-color: #1a2942 !important;
 }
 </style>

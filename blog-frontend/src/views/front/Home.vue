@@ -242,7 +242,7 @@ onMounted(async () => {
 }
 
 .article-card {
-  background: #fff;
+  background: var(--card-bg, #fff);
   border-radius: 8px;
   overflow: hidden;
   margin-bottom: 20px;
@@ -252,7 +252,7 @@ onMounted(async () => {
 
 .article-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
 }
 
 .article-cover img {
@@ -268,11 +268,11 @@ onMounted(async () => {
 .article-title {
   font-size: 1.3rem;
   margin: 0 0 10px 0;
-  color: #333;
+  color: var(--text-color, #333);
 }
 
 .article-summary {
-  color: #666;
+  color: var(--summary-color, #666);
   font-size: 14px;
   line-height: 1.6;
   margin-bottom: 15px;
@@ -286,7 +286,7 @@ onMounted(async () => {
   display: flex;
   gap: 15px;
   font-size: 13px;
-  color: #999;
+  color: var(--meta-color, #999);
 }
 
 .article-meta span {
@@ -308,7 +308,7 @@ onMounted(async () => {
 }
 
 .widget {
-  background: #fff;
+  background: var(--card-bg, #fff);
   border-radius: 8px;
   padding: 20px;
   margin-bottom: 20px;
@@ -320,10 +320,11 @@ onMounted(async () => {
 
 .blogger-card h3 {
   margin: 10px 0 5px;
+  color: var(--text-color, #333);
 }
 
 .blogger-card .bio {
-  color: #666;
+  color: var(--summary-color, #666);
   font-size: 14px;
 }
 
@@ -331,6 +332,7 @@ onMounted(async () => {
   margin: 0 0 15px;
   padding-bottom: 10px;
   border-bottom: 2px solid #409eff;
+  color: var(--text-color, #333);
 }
 
 .category-item {
@@ -338,7 +340,8 @@ onMounted(async () => {
   justify-content: space-between;
   padding: 8px 0;
   cursor: pointer;
-  border-bottom: 1px dashed #eee;
+  border-bottom: 1px dashed var(--border-color, #eee);
+  color: var(--text-color, #333);
 }
 
 .category-item:hover {
@@ -346,7 +349,8 @@ onMounted(async () => {
 }
 
 .category-item .count {
-  background: #f0f0f0;
+  background: var(--count-bg, #f0f0f0);
+  color: var(--text-color, #666);
   padding: 2px 8px;
   border-radius: 10px;
   font-size: 12px;
@@ -367,8 +371,8 @@ onMounted(async () => {
   width: 20px;
   height: 20px;
   border-radius: 4px;
-  background: #ddd;
-  color: #666;
+  background: var(--rank-bg, #ddd);
+  color: var(--rank-color, #666);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -387,6 +391,7 @@ onMounted(async () => {
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 14px;
+  color: var(--text-color, #333);
 }
 
 .pagination {
@@ -397,7 +402,20 @@ onMounted(async () => {
 .loading, .empty {
   text-align: center;
   padding: 40px;
-  color: #999;
+  color: var(--meta-color, #999);
+}
+
+/* 夜间模式样式 */
+:deep(.dark) .home-page,
+.dark .home-page {
+  --card-bg: #16213e;
+  --text-color: #e0e0e0;
+  --summary-color: #b0b0b0;
+  --meta-color: #8899aa;
+  --border-color: #2a3f5f;
+  --count-bg: #2a3f5f;
+  --rank-bg: #2a3f5f;
+  --rank-color: #e0e0e0;
 }
 
 @media (max-width: 768px) {
@@ -408,4 +426,6 @@ onMounted(async () => {
     width: 100%;
   }
 }
+
 </style>
+

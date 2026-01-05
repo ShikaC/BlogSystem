@@ -18,15 +18,9 @@ const routes = [
       { path: 'about', name: 'About', component: () => import('@/views/front/About.vue') },
       { path: 'links', name: 'Links', component: () => import('@/views/front/Links.vue') },
       // 用户中心
-      { 
-        path: 'user', 
-        meta: { requiresAuth: true },
-        children: [
-          { path: 'profile', name: 'UserProfile', component: () => import('@/views/front/UserCenter.vue') },
-          { path: 'article/edit/:id?', name: 'UserArticleEdit', component: () => import('@/views/admin/ArticleEdit.vue') },
-          { path: 'post/edit/:id?', name: 'UserPostEdit', component: () => import('@/views/front/Forum.vue') } // 暂定
-        ]
-      }
+      { path: 'user/profile', name: 'UserProfile', component: () => import('@/views/front/UserCenter.vue'), meta: { requiresAuth: true } },
+      { path: 'user/article/edit/:id?', name: 'UserArticleEdit', component: () => import('@/views/admin/ArticleEdit.vue'), meta: { requiresAuth: true } },
+      { path: 'user/post/edit/:id?', name: 'UserPostEdit', component: () => import('@/views/front/Forum.vue'), meta: { requiresAuth: true } }
     ]
   },
   // 登录/注册页
@@ -69,7 +63,7 @@ const router = createRouter({
 // 路由守卫
 router.beforeEach((to, from, next) => {
   const userStore = useUserStore()
-  
+
   if (to.matched.some(record => record.meta.requiresAuth)) {
     if (!userStore.isLoggedIn) {
       next({ name: 'Login', query: { redirect: to.fullPath } })

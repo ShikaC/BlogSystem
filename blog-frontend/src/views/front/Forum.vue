@@ -157,6 +157,7 @@ onMounted(loadSections)
   background: var(--card-bg, #fff);
   border-radius: 8px;
   box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+  color: var(--text-color, #333);
 }
 
 .forum-header {
@@ -166,26 +167,31 @@ onMounted(loadSections)
   margin-bottom: 20px;
 }
 
+.forum-header h1 {
+  color: var(--text-color, #333);
+}
+
 .post-item {
   padding: 15px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--border-color, #eee);
   cursor: pointer;
   transition: background 0.3s;
+  background: var(--card-bg, #fff);
 }
 
 .post-item:hover {
-  background: #f9f9f9;
+  background: var(--hover-bg, #f9f9f9);
 }
 
 .post-title {
   margin: 0 0 10px 0;
   font-size: 18px;
-  color: #303133;
+  color: var(--text-color, #303133);
 }
 
 .post-meta {
   font-size: 12px;
-  color: #909399;
+  color: var(--meta-color, #909399);
   display: flex;
   gap: 20px;
 }
@@ -193,7 +199,18 @@ onMounted(loadSections)
 .empty {
   text-align: center;
   padding: 40px;
-  color: #909399;
+  color: var(--meta-color, #909399);
+}
+
+/* 夜间模式样式 */
+:deep(.dark) .forum-page,
+.dark .forum-page {
+  --card-bg: #16213e;
+  --text-color: #e0e0e0;
+  --border-color: #2a3f5f;
+  --hover-bg: #1a2942;
+  --meta-color: #8899aa;
 }
 </style>
+
 

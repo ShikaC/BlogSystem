@@ -33,6 +33,8 @@ export const getMyArticles = (params) => request.get('/front/user/articles', { p
 export const getMyPosts = (params) => request.get('/front/user/posts', { params })
 export const getMyNotifications = (params) => request.get('/front/user/notifications', { params })
 export const getUserProfile = () => request.get('/front/user/profile')
+export const getMyLikedArticles = (params) => request.get('/front/user/likes', { params: { ...params, type: 'ARTICLE' } })
+export const getMyCollectedArticles = (params) => request.get('/front/user/favorites', { params: { ...params, type: 'ARTICLE' } })
 
 // 论坛相关
 export const getForumSections = () => request.get('/front/forum/sections')
@@ -41,6 +43,7 @@ export const getForumPost = (id) => request.get(`/front/forum/posts/${id}`)
 export const getForumPostComments = (id, params) => request.get(`/front/forum/posts/${id}/comments`, { params })
 // 论坛互动 - 需要登录，路径在 /front/user/forum
 export const savePost = (data) => request.post('/front/user/forum/posts', data)
+export const deletePost = (id) => request.delete(`/front/user/forum/posts/${id}`)
 export const likePost = (id) => request.post(`/front/user/forum/posts/${id}/like`)
 export const collectPost = (id) => request.post(`/front/user/forum/posts/${id}/collect`)
 export const createPostComment = (data) => request.post('/front/user/forum/comments', data)

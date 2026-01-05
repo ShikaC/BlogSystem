@@ -15,34 +15,42 @@ import java.util.List;
 @RestController
 @RequestMapping("/admin/comments")
 public class AdminCommentController {
-    
+
     @Autowired
     private CommentService commentService;
-    
+
     /**
      * 获取评论列表
+     * 
+     * @param targetType 评论目标类型：ARTICLE（文章）/ FORUM_POST（论坛帖子），为空时返回所有
+     * @param status     评论状态
+     * @param page       页码
+     * @param size       每页数量
      */
     @GetMapping
     public Result<PageResult<CommentVO>> getComments(
+            @RequestParam(required = false) String targetType,
+            @RequestParam(required = false) Long targetId,
             @RequestParam(required = false) Integer status,
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "10") Integer size) {
-        PageResult<CommentVO> result = commentService.getAdminComments(status, page, size);
-        return Result.success(result);
+        PageResult<CommentVO> commentPage = commentService.getAdminComments(targetType, targetId, status, page, size);
+        return Result.success(commentPage);
     }
-    
+
     /**
      * 博主回复评论
      */
     @PostMapping("/reply")
-    public Result<CommentVO> reply(@RequestParam Long articleId,
-                                   @RequestParam Long parentId,
-                                   @RequestParam(required = false) Long replyToId,
-                                   @RequestParam String content) {
-        CommentVO comment = commentService.bloggerReply(articleId, parentId, replyToId, content);
+    public Result<CommentVO> reply(@RequestParam String targetType,
+            @RequestParam Long targetId,
+            @RequestParam Long parentId,
+            @RequestParam(required = false) Long replyToId,
+            @RequestParam String content) {
+        CommentVO comment = commentService.bloggerReply(targetType, targetId, parentId, replyToId, content);
         return Result.success(comment);
     }
-    
+
     /**
      * 审核评论
      */
@@ -51,7 +59,7 @@ public class AdminCommentController {
         commentService.updateCommentStatus(id, status);
         return Result.success();
     }
-    
+
     /**
      * 批量审核
      */
@@ -60,7 +68,7 @@ public class AdminCommentController {
         commentService.batchUpdateStatus(ids, status);
         return Result.success();
     }
-    
+
     /**
      * 删除评论
      */
@@ -69,7 +77,7 @@ public class AdminCommentController {
         commentService.deleteComment(id);
         return Result.success();
     }
-    
+
     /**
      * 批量删除
      */

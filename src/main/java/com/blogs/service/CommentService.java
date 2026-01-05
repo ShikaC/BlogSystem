@@ -27,16 +27,16 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 public class CommentService {
-    
+
     @Autowired
     private CommentRepository commentRepository;
-    
+
     @Autowired
     private ArticleRepository articleRepository;
 
     @Autowired
     private ForumPostRepository forumPostRepository;
-    
+
     @Autowired
     private UserRepository userRepository;
 
@@ -50,7 +50,7 @@ public class CommentService {
     public CommentVO createComment(CommentRequest request, String username, String ipAddress) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new BusinessException("用户不存在"));
-        
+
         // 兼容旧参数：articleId -> (ARTICLE, targetId)
         Long targetId = request.getTargetId() != null ? request.getTargetId() : request.getArticleId();
         String targetType = request.getTargetType();
@@ -80,11 +80,11 @@ public class CommentService {
         comment.setIpAddress(ipAddress);
         comment.setIsBlogger("ADMIN".equals(user.getRole()));
         comment.setStatus(1); // 默认通过，实际可根据配置开启审核
-        
+
         // 兼容原有的昵称和头像 (从用户信息中获取)
         comment.setNickname(user.getNickname());
         comment.setAvatar(user.getAvatar());
-        
+
         // 处理回复
         if (request.getParentId() != null) {
             comment.setParentId(request.getParentId());
@@ -95,72 +95,84 @@ public class CommentService {
             comment.setReplyToId(request.getReplyToId());
             comment.setReplyToNickname(replyTo.getNickname());
         }
-        
+
         comment = commentRepository.save(comment);
-        
+
         // 更新目标内容评论/回帖数
         updateTargetCommentCount(targetType, targetId, 1);
 
         // 发送通知（评论/回帖 + 回复）
         sendCommentNotifications(comment, user);
-        
+
         return CommentVO.fromEntity(comment);
     }
-    
+
     /**
      * 用户删除自己的评论
      */
     public void deleteUserComment(Long id, String username) {
         Comment comment = commentRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("评论不存在"));
-        
+
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new BusinessException("用户不存在"));
-        
+
         // 检查评论是否属于当前用户
         if (!comment.getUser().getId().equals(user.getId())) {
             throw new BusinessException("无权删除此评论");
         }
-        
+
         String targetType = normalizeTargetTypeForExisting(comment);
         Long targetId = resolveTargetIdForExisting(comment);
         if (comment.getStatus() == 1 && targetType != null && targetId != null) {
             updateTargetCommentCount(targetType, targetId, -1);
         }
-        
+
         commentRepository.delete(comment);
     }
-    
+
     /**
      * 博主回复评论
      */
     @SuppressWarnings("deprecation")
-    public CommentVO bloggerReply(Long articleId, Long parentId, Long replyToId, String content) {
+    public CommentVO bloggerReply(String targetType, Long targetId, Long parentId, Long replyToId, String content) {
+        if (targetType == null || targetId == null) {
+            throw new BusinessException("回复目标不能为空");
+        }
+
         Comment comment = new Comment();
-        comment.setTargetId(articleId);
-        comment.setTargetType("ARTICLE");
-        comment.setLegacyArticleId(articleId);
+        comment.setTargetId(targetId);
+        comment.setTargetType(targetType);
+        if ("ARTICLE".equalsIgnoreCase(targetType)) {
+            comment.setLegacyArticleId(targetId);
+        }
         comment.setContent(content);
         comment.setNickname("博主");
         comment.setIsBlogger(true);
         comment.setStatus(1);
         comment.setParentId(parentId);
-        
+
         if (replyToId != null) {
             Comment replyTo = commentRepository.findById(replyToId)
                     .orElseThrow(() -> new BusinessException("回复的评论不存在"));
             comment.setReplyToId(replyToId);
             comment.setReplyToNickname(replyTo.getNickname());
         }
-        
+
         comment = commentRepository.save(comment);
-        
-        // 更新文章评论数
-        updateTargetCommentCount("ARTICLE", articleId, 1);
-        
+
+        // 更新评论数
+        updateTargetCommentCount(targetType, targetId, 1);
+
+        // 发送通知
+        User adminUser = userRepository.findByUsername("admin").orElse(null);
+        if (adminUser != null) {
+            sendCommentNotifications(comment, adminUser);
+        }
+
         return CommentVO.fromEntity(comment);
     }
-    
+
     /**
      * 获取文章评论（树形结构）
      */
@@ -169,16 +181,16 @@ public class CommentService {
         List<CommentVO> commentVOs = comments.stream()
                 .map(CommentVO::fromEntity)
                 .collect(Collectors.toList());
-        
+
         // 构建树形结构
         Map<Long, CommentVO> commentMap = new HashMap<>();
         List<CommentVO> rootComments = new ArrayList<>();
-        
+
         for (CommentVO vo : commentVOs) {
             commentMap.put(vo.getId(), vo);
             vo.setChildren(new ArrayList<>());
         }
-        
+
         for (CommentVO vo : commentVOs) {
             if (vo.getParentId() == null) {
                 rootComments.add(vo);
@@ -191,41 +203,71 @@ public class CommentService {
                 }
             }
         }
-        
+
         return rootComments;
     }
-    
+
     /**
      * 后台评论列表
+     * 
+     * @param targetType 评论目标类型：ARTICLE（文章）/ FORUM_POST（论坛帖子），为null时返回所有
+     * @param targetId   目标ID（文章ID或帖子ID），选填
+     * @param status     评论状态
+     * @param page       页码
+     * @param size       每页数量
      */
-    public PageResult<CommentVO> getAdminComments(Integer status, Integer page, Integer size) {
+    public PageResult<CommentVO> getAdminComments(String targetType, Long targetId, Integer status, Integer page,
+            Integer size) {
         Pageable pageable = PageRequest.of(page - 1, size);
         Page<Comment> commentPage;
-        
-        if (status == null) {
-            commentPage = commentRepository.findAllByOrderByCreatedAtDesc(pageable);
+
+        if (targetType != null && !targetType.isBlank()) {
+            String normalizedType = targetType.trim().toUpperCase(java.util.Locale.ROOT);
+            if (targetId != null) {
+                // 有类型且有ID
+                if (status == null) {
+                    commentPage = commentRepository.findByTargetTypeAndTargetIdCompatible(normalizedType, targetId,
+                            pageable);
+                } else {
+                    commentPage = commentRepository.findByTargetTypeAndTargetIdAndStatusCompatible(normalizedType,
+                            targetId, status, pageable);
+                }
+            } else {
+                // 只有类型
+                if (status == null) {
+                    commentPage = commentRepository.findByTargetTypeCompatible(normalizedType, pageable);
+                } else {
+                    commentPage = commentRepository.findByTargetTypeAndStatusCompatible(normalizedType, status,
+                            pageable);
+                }
+            }
         } else {
-            commentPage = commentRepository.findByStatusOrderByCreatedAtDesc(status, pageable);
+            // 没有类型 (targetId 在这里暂不生效，通常按类型筛选是基础)
+            if (status == null) {
+                commentPage = commentRepository.findAllByOrderByCreatedAtDesc(pageable);
+            } else {
+                commentPage = commentRepository.findByStatusOrderByCreatedAtDesc(status, pageable);
+            }
         }
-        
+
         List<CommentVO> list = commentPage.getContent().stream()
                 .map(CommentVO::fromEntity)
                 .collect(Collectors.toList());
-        
+
         return PageResult.of(list, commentPage.getTotalElements(), page, size);
     }
-    
+
     /**
      * 审核评论
      */
     public void updateCommentStatus(Long id, Integer status) {
         Comment comment = commentRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("评论不存在"));
-        
+
         int oldStatus = comment.getStatus();
         comment.setStatus(status);
         commentRepository.save(comment);
-        
+
         // 更新目标内容评论/回帖数
         String targetType = normalizeTargetTypeForExisting(comment);
         Long targetId = resolveTargetIdForExisting(comment);
@@ -237,7 +279,7 @@ public class CommentService {
             }
         }
     }
-    
+
     /**
      * 批量审核
      */
@@ -246,23 +288,23 @@ public class CommentService {
             updateCommentStatus(id, status);
         }
     }
-    
+
     /**
      * 删除评论（管理员）
      */
     public void deleteComment(Long id) {
         Comment comment = commentRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("评论不存在"));
-        
+
         String targetType = normalizeTargetTypeForExisting(comment);
         Long targetId = resolveTargetIdForExisting(comment);
         if (comment.getStatus() == 1 && targetType != null && targetId != null) {
             updateTargetCommentCount(targetType, targetId, -1);
         }
-        
+
         commentRepository.delete(comment);
     }
-    
+
     /**
      * 批量删除
      */
@@ -271,7 +313,7 @@ public class CommentService {
             deleteComment(id);
         }
     }
-    
+
     /**
      * 最新评论
      */
@@ -312,8 +354,7 @@ public class CommentService {
                             "有人回复了你",
                             safePreview(comment.getContent()),
                             comment.getId(),
-                            "COMMENT"
-                    );
+                            "COMMENT");
                 }
             });
         }
@@ -322,7 +363,8 @@ public class CommentService {
         Long ownerId = null;
         if ("ARTICLE".equals(targetType)) {
             ownerId = articleRepository.findById(targetId)
-                    .map(a -> a.getUserId() != null ? a.getUserId() : (a.getUser() != null ? a.getUser().getId() : null))
+                    .map(a -> a.getUserId() != null ? a.getUserId()
+                            : (a.getUser() != null ? a.getUser().getId() : null))
                     .orElse(null);
         } else if ("FORUM_POST".equals(targetType)) {
             ownerId = forumPostRepository.findById(targetId)
@@ -341,8 +383,7 @@ public class CommentService {
                     "有人评论了你",
                     safePreview(comment.getContent()),
                     targetId,
-                    targetType
-            );
+                    targetType);
         }
     }
 

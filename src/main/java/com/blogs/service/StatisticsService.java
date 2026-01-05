@@ -10,51 +10,53 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class StatisticsService {
-    
+
     @Autowired
     private ArticleRepository articleRepository;
-    
+
     @Autowired
     private ForumPostRepository postRepository;
-    
+
     @Autowired
     private UserRepository userRepository;
-    
+
     @Autowired
     private CommentRepository commentRepository;
-    
+
     @Autowired
     private CategoryRepository categoryRepository;
-    
+
     @Autowired
     private TagRepository tagRepository;
-    
+
     /**
      * 获取全站可视化统计数据
      */
     public StatisticsDTO getStatistics() {
         StatisticsDTO dto = new StatisticsDTO();
-        
+
         dto.setTotalArticles(articleRepository.count());
         dto.setTotalPosts(postRepository.count());
         dto.setTotalUsers(userRepository.count());
-        
+
         dto.setPublishedArticles(articleRepository.countByStatus(1));
         dto.setDraftArticles(articleRepository.countByStatus(0));
-        
-        Long totalViews = articleRepository.sumViewCount();
-        dto.setTotalViews(totalViews != null ? totalViews : 0L);
-        
-        Long totalLikes = articleRepository.sumLikeCount();
-        dto.setTotalLikes(totalLikes != null ? totalLikes : 0L);
-        
+
+        Long articleViews = articleRepository.sumViewCount();
+        Long postViews = postRepository.sumViewCount();
+        dto.setTotalViews((articleViews != null ? articleViews : 0L) + (postViews != null ? postViews : 0L));
+
+        Long articleLikes = articleRepository.sumLikeCount();
+        Long postLikes = postRepository.sumLikeCount();
+        dto.setTotalLikes((articleLikes != null ? articleLikes : 0L) + (postLikes != null ? postLikes : 0L));
+
         // 统一评论/回帖：comment 表既包含文章评论也包含帖子回帖
         dto.setTotalComments(commentRepository.countAll());
         dto.setTotalPostComments(commentRepository.countByTargetType("FORUM_POST"));
         dto.setPendingComments(commentRepository.countByStatus(0));
         dto.setTotalCategories(categoryRepository.count());
         dto.setTotalTags(tagRepository.count());
-        
+
         return dto;
     }
 }

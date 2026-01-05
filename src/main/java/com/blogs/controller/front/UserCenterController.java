@@ -118,19 +118,23 @@ public class UserCenterController {
 
         List<UserActionItemVO> list = new ArrayList<>();
         for (Favorite f : p.getContent()) {
-            UserActionItemVO vo = new UserActionItemVO();
-            vo.setTargetId(f.getTargetId());
-            vo.setCreatedAt(f.getCreatedAt());
-            if ("ARTICLE".equalsIgnoreCase(f.getType())) {
-                vo.setContentType("ARTICLE");
-                ArticleVO a = articleService.getArticle(f.getTargetId());
-                vo.setTitle(a.getTitle());
-            } else {
-                vo.setContentType("FORUM_POST");
-                ForumPost post = forumService.getPostWithoutIncrement(f.getTargetId());
-                vo.setTitle(post.getTitle());
+            try {
+                UserActionItemVO vo = new UserActionItemVO();
+                vo.setTargetId(f.getTargetId());
+                vo.setCreatedAt(f.getCreatedAt());
+                if ("ARTICLE".equalsIgnoreCase(f.getType())) {
+                    vo.setContentType("ARTICLE");
+                    ArticleVO a = articleService.getArticle(f.getTargetId());
+                    vo.setTitle(a.getTitle());
+                } else {
+                    vo.setContentType("FORUM_POST");
+                    ForumPost post = forumService.getPostWithoutIncrement(f.getTargetId());
+                    vo.setTitle(post.getTitle());
+                }
+                list.add(vo);
+            } catch (Exception e) {
+                // 忽略已删除的内容
             }
-            list.add(vo);
         }
         return Result.success(PageResult.of(list, p.getTotalElements(), page, size));
     }
@@ -156,19 +160,24 @@ public class UserCenterController {
             if (type != null && !type.isBlank() && !r.getType().equalsIgnoreCase(type.trim())) {
                 continue;
             }
-            UserActionItemVO vo = new UserActionItemVO();
-            vo.setTargetId(r.getTargetId());
-            vo.setCreatedAt(r.getCreatedAt());
-            if ("ARTICLE".equalsIgnoreCase(r.getType())) {
-                vo.setContentType("ARTICLE");
-                vo.setTitle(articleService.getArticle(r.getTargetId()).getTitle());
-            } else {
-                vo.setContentType("FORUM_POST");
-                vo.setTitle(forumService.getPostWithoutIncrement(r.getTargetId()).getTitle());
+            try {
+                UserActionItemVO vo = new UserActionItemVO();
+                vo.setTargetId(r.getTargetId());
+                vo.setCreatedAt(r.getCreatedAt());
+                if ("ARTICLE".equalsIgnoreCase(r.getType())) {
+                    vo.setContentType("ARTICLE");
+                    vo.setTitle(articleService.getArticle(r.getTargetId()).getTitle());
+                } else {
+                    vo.setContentType("FORUM_POST");
+                    vo.setTitle(forumService.getPostWithoutIncrement(r.getTargetId()).getTitle());
+                }
+                list.add(vo);
+            } catch (Exception e) {
+                // 忽略已删除的内容
             }
-            list.add(vo);
         }
         return Result.success(PageResult.of(list, p.getTotalElements(), page, size));
+
     }
 
     /**
@@ -253,17 +262,21 @@ public class UserCenterController {
 
         List<UserActionItemVO> list = new ArrayList<>();
         for (LikeRecord r : p.getContent()) {
-            UserActionItemVO vo = new UserActionItemVO();
-            vo.setTargetId(r.getTargetId());
-            vo.setCreatedAt(r.getCreatedAt());
-            if ("ARTICLE".equalsIgnoreCase(r.getType())) {
-                vo.setContentType("ARTICLE");
-                vo.setTitle(articleService.getArticle(r.getTargetId()).getTitle());
-            } else {
-                vo.setContentType("FORUM_POST");
-                vo.setTitle(forumService.getPostWithoutIncrement(r.getTargetId()).getTitle());
+            try {
+                UserActionItemVO vo = new UserActionItemVO();
+                vo.setTargetId(r.getTargetId());
+                vo.setCreatedAt(r.getCreatedAt());
+                if ("ARTICLE".equalsIgnoreCase(r.getType())) {
+                    vo.setContentType("ARTICLE");
+                    vo.setTitle(articleService.getArticle(r.getTargetId()).getTitle());
+                } else {
+                    vo.setContentType("FORUM_POST");
+                    vo.setTitle(forumService.getPostWithoutIncrement(r.getTargetId()).getTitle());
+                }
+                list.add(vo);
+            } catch (Exception e) {
+                // 忽略已删除的内容
             }
-            list.add(vo);
         }
         return Result.success(PageResult.of(list, p.getTotalElements(), page, size));
     }
@@ -297,21 +310,26 @@ public class UserCenterController {
 
         List<UserActionItemVO> list = new ArrayList<>();
         for (Favorite f : p.getContent()) {
-            UserActionItemVO vo = new UserActionItemVO();
-            vo.setTargetId(f.getTargetId());
-            vo.setCreatedAt(f.getCreatedAt());
-            if ("ARTICLE".equalsIgnoreCase(f.getType())) {
-                vo.setContentType("ARTICLE");
-                ArticleVO a = articleService.getArticle(f.getTargetId());
-                vo.setTitle(a.getTitle());
-            } else {
-                vo.setContentType("FORUM_POST");
-                ForumPost post = forumService.getPostWithoutIncrement(f.getTargetId());
-                vo.setTitle(post.getTitle());
+            try {
+                UserActionItemVO vo = new UserActionItemVO();
+                vo.setTargetId(f.getTargetId());
+                vo.setCreatedAt(f.getCreatedAt());
+                if ("ARTICLE".equalsIgnoreCase(f.getType())) {
+                    vo.setContentType("ARTICLE");
+                    ArticleVO a = articleService.getArticle(f.getTargetId());
+                    vo.setTitle(a.getTitle());
+                } else {
+                    vo.setContentType("FORUM_POST");
+                    ForumPost post = forumService.getPostWithoutIncrement(f.getTargetId());
+                    vo.setTitle(post.getTitle());
+                }
+                list.add(vo);
+            } catch (Exception e) {
+                // 忽略已删除的内容
             }
-            list.add(vo);
         }
         return Result.success(PageResult.of(list, p.getTotalElements(), page, size));
+
     }
 
     private String getCurrentUsername() {

@@ -35,11 +35,18 @@ const routes = [
     meta: { requiresAuth: true },
     children: [
       { path: '', name: 'Dashboard', component: () => import('@/views/admin/Dashboard.vue') },
+      // 文章管理
       { path: 'articles', name: 'AdminArticles', component: () => import('@/views/admin/Articles.vue') },
       { path: 'article/edit/:id?', name: 'ArticleEdit', component: () => import('@/views/admin/ArticleEdit.vue') },
+      { path: 'article-comments', name: 'AdminArticleComments', component: () => import('@/views/admin/ArticleComments.vue') },
+      // 论坛管理
+      { path: 'forum-posts', name: 'AdminForumPosts', component: () => import('@/views/admin/ForumPosts.vue') },
+      { path: 'forum-comments', name: 'AdminForumComments', component: () => import('@/views/admin/ForumComments.vue') },
+      // 分类/标签
       { path: 'categories', name: 'AdminCategories', component: () => import('@/views/admin/Categories.vue') },
       { path: 'tags', name: 'AdminTags', component: () => import('@/views/admin/Tags.vue') },
-      { path: 'comments', name: 'AdminComments', component: () => import('@/views/admin/Comments.vue') },
+      // 其他
+      { path: 'comments', redirect: 'article-comments' },  // 兼容旧路由
       { path: 'media', name: 'AdminMedia', component: () => import('@/views/admin/Media.vue') },
       { path: 'friend-links', name: 'AdminFriendLinks', component: () => import('@/views/admin/FriendLinks.vue') },
       { path: 'settings', name: 'AdminSettings', component: () => import('@/views/admin/Settings.vue') },

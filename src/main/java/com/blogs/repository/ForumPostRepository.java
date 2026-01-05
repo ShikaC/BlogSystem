@@ -11,7 +11,11 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ForumPostRepository extends JpaRepository<ForumPost, Long> {
     Page<ForumPost> findBySectionIdAndStatus(Long sectionId, Integer status, Pageable pageable);
+
+    Page<ForumPost> findBySectionId(Long sectionId, Pageable pageable);
+
     Page<ForumPost> findByUserId(Long userId, Pageable pageable);
+
     Page<ForumPost> findByStatus(Integer status, Pageable pageable);
 
     // 更新计数（与 ArticleRepository 保持一致的增量接口，便于评论/回帖系统统一）
@@ -31,5 +35,10 @@ public interface ForumPostRepository extends JpaRepository<ForumPost, Long> {
             )
             """)
     Page<ForumPost> searchByKeyword(String keyword, Pageable pageable);
-}
 
+    @Query("SELECT SUM(p.viewCount) FROM ForumPost p")
+    Long sumViewCount();
+
+    @Query("SELECT SUM(p.likeCount) FROM ForumPost p")
+    Long sumLikeCount();
+}

@@ -3,6 +3,7 @@
     <h2>仪表盘</h2>
     
     <el-row :gutter="20">
+      <!-- 第一行：核心数据 -->
       <el-col :xs="12" :sm="6">
         <div class="stat-card">
           <div class="stat-icon" style="background: #409eff;"><el-icon><Document /></el-icon></div>
@@ -12,6 +13,37 @@
           </div>
         </div>
       </el-col>
+      <el-col :xs="12" :sm="6">
+        <div class="stat-card">
+          <div class="stat-icon" style="background: #e6a23c;"><el-icon><ChatLineSquare /></el-icon></div>
+          <div class="stat-info">
+            <p class="stat-value">{{ stats.totalPosts }}</p>
+            <p class="stat-label">论坛帖子</p>
+          </div>
+        </div>
+      </el-col>
+      <el-col :xs="12" :sm="6">
+        <div class="stat-card">
+          <div class="stat-icon" style="background: #f56c6c;"><el-icon><ChatDotRound /></el-icon></div>
+          <div class="stat-info">
+            <p class="stat-value">{{ stats.totalComments }}</p>
+            <p class="stat-label">总评论数</p>
+          </div>
+        </div>
+      </el-col>
+      <el-col :xs="12" :sm="6">
+        <div class="stat-card">
+          <div class="stat-icon" style="background: #36cfc9;"><el-icon><User /></el-icon></div>
+          <div class="stat-info">
+            <p class="stat-value">{{ stats.totalUsers }}</p>
+            <p class="stat-label">用户总数</p>
+          </div>
+        </div>
+      </el-col>
+    </el-row>
+
+    <!-- 第二行：互动数据 -->
+    <el-row :gutter="20" style="margin-top: 20px;">
       <el-col :xs="12" :sm="6">
         <div class="stat-card">
           <div class="stat-icon" style="background: #67c23a;"><el-icon><View /></el-icon></div>
@@ -32,10 +64,19 @@
       </el-col>
       <el-col :xs="12" :sm="6">
         <div class="stat-card">
-          <div class="stat-icon" style="background: #f56c6c;"><el-icon><ChatDotRound /></el-icon></div>
+          <div class="stat-icon" style="background: #909399;"><el-icon><Message /></el-icon></div>
           <div class="stat-info">
-            <p class="stat-value">{{ stats.totalComments }}</p>
-            <p class="stat-label">总评论数</p>
+            <p class="stat-value">{{ stats.pendingComments }}</p>
+            <p class="stat-label">待审评论</p>
+          </div>
+        </div>
+      </el-col>
+      <el-col :xs="12" :sm="6">
+        <div class="stat-card">
+          <div class="stat-icon" style="background: #909399;"><el-icon><EditPen /></el-icon></div>
+          <div class="stat-info">
+            <p class="stat-value">{{ stats.draftArticles }}</p>
+            <p class="stat-label">草稿箱</p>
           </div>
         </div>
       </el-col>
@@ -48,11 +89,9 @@
             <el-button type="primary" @click="$router.push('/admin/article/edit')">
               <el-icon><Plus /></el-icon> 写文章
             </el-button>
-            <el-button @click="$router.push('/admin/articles')">文章管理</el-button>
-            <el-button @click="$router.push('/admin/comments')">
-              评论管理
-              <el-badge v-if="stats.pendingComments" :value="stats.pendingComments" class="badge" />
-            </el-button>
+            <el-button @click="$router.push('/admin/article-comments')">文章评论</el-button>
+            <el-button @click="$router.push('/admin/forum-comments')">论坛评论</el-button>
+            <el-button @click="$router.push('/admin/forum-posts')">帖子管理</el-button>
           </div>
         </el-card>
       </el-col>
@@ -82,7 +121,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { getStatistics, getHotArticles, exportArticlesMd, exportArticlesHtml, exportAllData } from '@/api/admin'
-import { Document, View, Star, ChatDotRound, Plus } from '@element-plus/icons-vue'
+import { Document, View, Star, ChatDotRound, Plus, ChatLineSquare, User, Message, EditPen } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 
 const userStore = useUserStore()

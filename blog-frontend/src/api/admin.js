@@ -73,3 +73,15 @@ export const exportArticlesMd = () => '/api/admin/backup/articles/markdown'
 export const exportArticlesHtml = () => '/api/admin/backup/articles/html'
 export const exportComments = () => '/api/admin/backup/comments'
 export const exportAllData = () => '/api/admin/backup/all'
+
+// 论坛管理
+export const getAdminForumSections = () => request.get('/admin/forum/sections')
+export const saveForumSection = (data) => request.post('/admin/forum/sections', data)
+export const deleteForumSection = (id) => request.delete(`/admin/forum/sections/${id}`)
+
+export const getAdminForumPosts = (params) => request.get('/admin/forum/posts', { params })
+export const updateForumPostStatus = (id, status) => request.post(`/admin/forum/posts/${id}/status`, null, { params: { status } })
+export const deleteForumPost = (id) => request.delete(`/admin/forum/posts/${id}`)
+export const permanentDeleteForumPost = (id) => request.delete(`/admin/forum/posts/${id}/permanent`)
+export const restoreForumPost = (id) => request.post(`/admin/forum/posts/${id}/restore`)
+export const batchDeleteForumPosts = (ids) => request.delete('/admin/forum/posts/batch', { data: ids })

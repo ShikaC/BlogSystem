@@ -45,7 +45,7 @@
         </el-form-item>
         <el-form-item label="板块">
           <el-select v-model="postForm.sectionId" placeholder="请选择板块">
-            <el-option v-for="s in sections" :key="s.id" :label="s.name" :name="s.id" />
+            <el-option v-for="s in sections" :key="s.id" :label="s.name" :value="s.id" />
           </el-select>
         </el-form-item>
         <el-form-item label="内容">

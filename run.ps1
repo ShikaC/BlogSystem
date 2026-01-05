@@ -39,18 +39,20 @@ if (-not (Test-Path "uploads")) {
     Write-Host "已创建 uploads 目录" -ForegroundColor Green
 }
 
-# 5. 启动后端
+# 5. 启动后端 (重置并写入日志)
 Write-Host "正在启动后端服务 (端口 8080)..." -ForegroundColor Cyan
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "$mvnCmd spring-boot:run" -WindowStyle Normal
+if (Test-Path "backend.log") { Clear-Content "backend.log" }
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "$mvnCmd spring-boot:run | Tee-Object -FilePath 'backend.log'" -WindowStyle Normal
 
-# 6. 启动前端
+# 6. 启动前端 (重置并写入日志)
 Write-Host "正在启动前端服务 (端口 3000)..." -ForegroundColor Cyan
 Set-Location blog-frontend
+if (Test-Path "frontend.log") { Clear-Content "frontend.log" }
 if (-not (Test-Path "node_modules")) {
     Write-Host "正在安装前端依赖 (仅首次运行)..." -ForegroundColor Yellow
     npm install
 }
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "npm run dev" -WindowStyle Normal
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "npm run dev | Tee-Object -FilePath 'frontend.log'" -WindowStyle Normal
 
 Write-Host "`n====================================================" -ForegroundColor Green
 Write-Host "项目启动指令已发送！" -ForegroundColor Green

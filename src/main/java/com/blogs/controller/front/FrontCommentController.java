@@ -4,7 +4,7 @@ import com.blogs.common.Result;
 import com.blogs.dto.CommentRequest;
 import com.blogs.dto.CommentVO;
 import com.blogs.exception.BusinessException;
-import com.blogs.service.CaptchaService;
+
 import com.blogs.service.CommentService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -18,31 +18,31 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/front/comments")
 public class FrontCommentController {
-    
+
     @Autowired
     private CommentService commentService;
-    
-    @Autowired
-    private CaptchaService captchaService;
-    
+
+    // @Autowired
+    // private CaptchaService captchaService;
+
     /**
      * 发表评论
      */
     @PostMapping
     public Result<CommentVO> createComment(@Valid @RequestBody CommentRequest request,
-                                           HttpServletRequest httpRequest) {
+            HttpServletRequest httpRequest) {
         // 获取当前用户
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         if ("anonymousUser".equals(username)) {
             throw new BusinessException("请先登录再发表评论");
         }
-        
+
         // 移除验证码验证，用户登录后即可发表评论
         String ipAddress = getClientIp(httpRequest);
         CommentVO comment = commentService.createComment(request, username, ipAddress);
         return Result.success(comment);
     }
-    
+
     /**
      * 删除评论（仅限用户删除自己的评论）
      */
@@ -53,11 +53,11 @@ public class FrontCommentController {
         if ("anonymousUser".equals(username)) {
             throw new BusinessException("请先登录");
         }
-        
+
         commentService.deleteUserComment(id, username);
         return Result.success();
     }
-    
+
     private String getClientIp(HttpServletRequest request) {
         String ip = request.getHeader("X-Forwarded-For");
         if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {

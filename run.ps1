@@ -45,7 +45,7 @@ Start-Process powershell -ArgumentList "-NoExit", "-Command", "$mvnCmd spring-bo
 
 # 6. 启动前端
 Write-Host "正在启动前端服务 (端口 3000)..." -ForegroundColor Cyan
-cd blog-frontend
+Set-Location blog-frontend
 if (-not (Test-Path "node_modules")) {
     Write-Host "正在安装前端依赖 (仅首次运行)..." -ForegroundColor Yellow
     npm install

@@ -3,7 +3,7 @@ package com.blogs.controller.front;
 import com.blogs.common.PageResult;
 import com.blogs.common.Result;
 import com.blogs.dto.ForumPostVO;
-import com.blogs.entity.ForumPost;
+
 import com.blogs.entity.ForumPostComment;
 import com.blogs.entity.ForumSection;
 import com.blogs.service.ForumService;

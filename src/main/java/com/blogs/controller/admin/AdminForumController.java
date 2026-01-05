@@ -5,7 +5,7 @@ import com.blogs.common.Result;
 import com.blogs.entity.ForumPost;
 import com.blogs.entity.ForumSection;
 import com.blogs.repository.ForumPostRepository;
-import com.blogs.repository.ForumSectionRepository;
+
 import com.blogs.service.ForumService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -27,9 +27,6 @@ public class AdminForumController {
 
     @Autowired
     private ForumPostRepository forumPostRepository;
-
-    @Autowired
-    private ForumSectionRepository forumSectionRepository;
 
     // ==================== 板块管理 ====================
 

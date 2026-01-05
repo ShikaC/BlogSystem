@@ -9,6 +9,10 @@ export const getCategories = () => request.get('/front/categories')
 export const getCategory = (id) => request.get(`/front/categories/${id}`)
 export const getTags = () => request.get('/front/tags')
 export const getTag = (id) => request.get(`/front/tags/${id}`)
+
+export const getArchives = () => request.get('/front/archives')
+export const getArticlesByYearMonth = (year, month, params) => request.get(`/front/archives/${year}/${month}`, { params })
+export const getFriendLinks = () => request.get('/front/friend-links')
 // 修复：添加确实的分类和标签文章获取接口
 export const getArticlesByCategory = (id, params) => request.get(`/front/articles/category/${id}`, { params })
 export const getArticlesByTag = (id, params) => request.get(`/front/articles/tag/${id}`, { params })

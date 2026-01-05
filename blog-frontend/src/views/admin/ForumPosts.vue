@@ -2,6 +2,7 @@
   <div class="forum-posts-page">
     <div class="page-header">
       <h2>论坛帖子管理</h2>
+      <el-button type="warning" plain @click="handleFixCounts">校正评论数</el-button>
     </div>
 
     <el-card>
@@ -72,7 +73,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { getAdminForumPosts, getAdminForumSections, deleteForumPost, restoreForumPost, permanentDeleteForumPost, batchDeleteForumPosts } from '@/api/admin'
+import { getAdminForumPosts, getAdminForumSections, deleteForumPost, restoreForumPost, permanentDeleteForumPost, batchDeleteForumPosts, fixForumPostCounts } from '@/api/admin'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const posts = ref([])
@@ -155,6 +156,19 @@ const handleBatchDelete = async () => {
   await batchDeleteForumPosts(selectedIds.value)
   ElMessage.success('批量删除成功')
   loadPosts()
+}
+
+const handleFixCounts = async () => {
+  try {
+    await ElMessageBox.confirm('确定要重新计算所有帖子的评论数吗？这可能需要一点时间。', '提示')
+    await fixForumPostCounts()
+    ElMessage.success('校正完成')
+    loadPosts()
+  } catch (e) {
+    if (e !== 'cancel') {
+      ElMessage.error('校正失败')
+    }
+  }
 }
 
 onMounted(() => {

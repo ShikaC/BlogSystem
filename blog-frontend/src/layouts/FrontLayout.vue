@@ -10,6 +10,7 @@
           <router-link to="/" class="nav-item">首页</router-link>
           <router-link to="/forum" class="nav-item">论坛</router-link>
           <router-link to="/archives" class="nav-item">归档</router-link>
+          <router-link to="/links" class="nav-item">友链</router-link>
           <router-link to="/about" class="nav-item">关于</router-link>
         </nav>
         <div class="header-right">

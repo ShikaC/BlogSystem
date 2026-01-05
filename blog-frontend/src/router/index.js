@@ -42,6 +42,7 @@ const routes = [
       // 论坛管理
       { path: 'forum-posts', name: 'AdminForumPosts', component: () => import('@/views/admin/ForumPosts.vue') },
       { path: 'forum-comments', name: 'AdminForumComments', component: () => import('@/views/admin/ForumComments.vue') },
+      { path: 'forum-sections', name: 'AdminForumSections', component: () => import('@/views/admin/ForumSections.vue') },
       // 分类/标签
       { path: 'categories', name: 'AdminCategories', component: () => import('@/views/admin/Categories.vue') },
       { path: 'tags', name: 'AdminTags', component: () => import('@/views/admin/Tags.vue') },

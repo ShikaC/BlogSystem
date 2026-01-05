@@ -19,7 +19,6 @@
           <template #title>仪表盘</template>
         </el-menu-item>
         
-        <!-- 文章管理 -->
         <el-sub-menu index="article-group">
           <template #title>
             <el-icon><Document /></el-icon>
@@ -32,6 +31,14 @@
           <el-menu-item index="/admin/article-comments">
             <el-icon><ChatDotRound /></el-icon>
             <template #title>文章评论</template>
+          </el-menu-item>
+          <el-menu-item index="/admin/categories">
+            <el-icon><Folder /></el-icon>
+            <template #title>分类管理</template>
+          </el-menu-item>
+          <el-menu-item index="/admin/tags">
+            <el-icon><PriceTag /></el-icon>
+            <template #title>标签管理</template>
           </el-menu-item>
         </el-sub-menu>
 
@@ -49,16 +56,11 @@
             <el-icon><ChatDotRound /></el-icon>
             <template #title>论坛评论</template>
           </el-menu-item>
+          <el-menu-item index="/admin/forum-sections">
+            <el-icon><Grid /></el-icon>
+            <template #title>板块管理</template>
+          </el-menu-item>
         </el-sub-menu>
-
-        <el-menu-item index="/admin/categories">
-          <el-icon><Folder /></el-icon>
-          <template #title>分类管理</template>
-        </el-menu-item>
-        <el-menu-item index="/admin/tags">
-          <el-icon><PriceTag /></el-icon>
-          <template #title>标签管理</template>
-        </el-menu-item>
         <el-menu-item index="/admin/media">
           <el-icon><Picture /></el-icon>
           <template #title>媒体库</template>
@@ -112,7 +114,7 @@ import { useUserStore } from '@/stores/user'
 import { ElMessageBox } from 'element-plus'
 import {
   DataAnalysis, Document, Folder, PriceTag, ChatDotRound,
-  Picture, Link, Setting, Expand, Fold, ChatLineSquare, Postcard
+  Picture, Link, Setting, Expand, Fold, ChatLineSquare, Postcard, Grid
 } from '@element-plus/icons-vue'
 
 const router = useRouter()

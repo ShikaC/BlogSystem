@@ -85,3 +85,4 @@ export const deleteForumPost = (id) => request.delete(`/admin/forum/posts/${id}`
 export const permanentDeleteForumPost = (id) => request.delete(`/admin/forum/posts/${id}/permanent`)
 export const restoreForumPost = (id) => request.post(`/admin/forum/posts/${id}/restore`)
 export const batchDeleteForumPosts = (ids) => request.delete('/admin/forum/posts/batch', { data: ids })
+export const fixForumPostCounts = () => request.post('/admin/forum/fix-counts')

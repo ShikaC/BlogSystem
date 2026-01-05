@@ -144,4 +144,13 @@ public class AdminForumController {
         }
         return Result.success();
     }
+
+    /**
+     * 修复评论数（当数据不一致时使用）
+     */
+    @PostMapping("/fix-counts")
+    public Result<Void> fixCounts() {
+        forumService.fixPostCommentCounts();
+        return Result.success();
+    }
 }

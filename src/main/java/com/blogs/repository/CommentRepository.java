@@ -13,6 +13,8 @@ import java.util.List;
 @Repository
 public interface CommentRepository extends JpaRepository<Comment, Long> {
 
+  long countByTargetTypeAndTargetIdAndStatus(String targetType, Long targetId, Integer status);
+
   /**
    * 前台展示 - 文章评论（兼容旧数据：targetType 为空时按 legacyArticleId 匹配）
    */

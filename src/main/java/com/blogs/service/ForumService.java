@@ -383,4 +383,18 @@ public class ForumService {
         String c = content.trim();
         return c.length() > 120 ? c.substring(0, 120) + "..." : c;
     }
+
+    /**
+     * 修复帖子评论数（重新计算）
+     */
+    public void fixPostCommentCounts() {
+        List<ForumPost> posts = postRepository.findAll();
+        for (ForumPost post : posts) {
+            long count = commentRepository.countByTargetTypeAndTargetIdAndStatus("FORUM_POST", post.getId(), 1);
+            if (!Objects.equals(post.getCommentCount(), count)) {
+                post.setCommentCount(count);
+                postRepository.save(post);
+            }
+        }
+    }
 }

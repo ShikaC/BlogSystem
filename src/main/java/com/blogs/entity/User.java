@@ -58,6 +58,18 @@ public class User {
     @Column(length = 100)
     private String weixin;
 
+    /**
+     * 隐私设置：点赞列表是否公开
+     */
+    @Column(name = "likes_public")
+    private Boolean likesPublic = true;
+
+    /**
+     * 隐私设置：收藏列表是否公开
+     */
+    @Column(name = "favorites_public")
+    private Boolean favoritesPublic = true;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

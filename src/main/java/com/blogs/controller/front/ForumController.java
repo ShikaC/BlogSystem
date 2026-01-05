@@ -2,6 +2,7 @@ package com.blogs.controller.front;
 
 import com.blogs.common.PageResult;
 import com.blogs.common.Result;
+import com.blogs.dto.ForumPostVO;
 import com.blogs.entity.ForumPost;
 import com.blogs.entity.ForumPostComment;
 import com.blogs.entity.ForumSection;
@@ -44,7 +45,7 @@ public class ForumController {
      * 获取帖子详情
      */
     @GetMapping("/posts/{id}")
-    public Result<ForumPost> getPost(@PathVariable Long id) {
+    public Result<ForumPostVO> getPost(@PathVariable Long id) {
         return Result.success(forumService.getPost(id));
     }
 

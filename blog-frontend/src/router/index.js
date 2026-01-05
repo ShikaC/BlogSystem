@@ -17,10 +17,12 @@ const routes = [
       { path: 'search', name: 'Search', component: () => import('@/views/front/Search.vue') },
       { path: 'about', name: 'About', component: () => import('@/views/front/About.vue') },
       { path: 'links', name: 'Links', component: () => import('@/views/front/Links.vue') },
-      // 用户中心
+      // 用户中心 -- 仅自己可见
       { path: 'user/profile', name: 'UserProfile', component: () => import('@/views/front/UserCenter.vue'), meta: { requiresAuth: true } },
       { path: 'user/article/edit/:id?', name: 'UserArticleEdit', component: () => import('@/views/admin/ArticleEdit.vue'), meta: { requiresAuth: true } },
-      { path: 'user/post/edit/:id?', name: 'UserPostEdit', component: () => import('@/views/front/Forum.vue'), meta: { requiresAuth: true } }
+      { path: 'user/post/edit/:id?', name: 'UserPostEdit', component: () => import('@/views/front/Forum.vue'), meta: { requiresAuth: true } },
+      // 公开用户主页 -- 所有人可见 (放在最后，避免覆盖上面的路由)
+      { path: 'user/:userId', name: 'PublicUserProfile', component: () => import('@/views/front/PublicUserProfile.vue') }
     ]
   },
   // 登录/注册页

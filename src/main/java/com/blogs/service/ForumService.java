@@ -2,6 +2,7 @@ package com.blogs.service;
 
 import com.blogs.common.PageResult;
 import com.blogs.common.NotificationTypes;
+import com.blogs.dto.ForumPostVO;
 import com.blogs.entity.*;
 import com.blogs.exception.BusinessException;
 import com.blogs.repository.*;
@@ -100,14 +101,22 @@ public class ForumService {
         return PageResult.of(postPage.getContent(), postPage.getTotalElements(), page, size);
     }
 
-    public ForumPost getPost(Long id) {
+    public ForumPostVO getPost(Long id) {
         if (id == null) {
             throw new BusinessException("帖子ID不能为空");
         }
         ForumPost post = postRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("帖子不存在"));
         post.setViewCount(post.getViewCount() + 1);
-        return postRepository.save(post);
+        post = postRepository.save(post);
+
+        // 查询用户信息
+        User user = null;
+        if (post.getUserId() != null) {
+            user = userRepository.findById(post.getUserId()).orElse(null);
+        }
+
+        return ForumPostVO.fromEntity(post, user);
     }
 
     /**

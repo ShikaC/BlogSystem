@@ -33,8 +33,16 @@ export const getMyArticles = (params) => request.get('/front/user/articles', { p
 export const getMyPosts = (params) => request.get('/front/user/posts', { params })
 export const getMyNotifications = (params) => request.get('/front/user/notifications', { params })
 export const getUserProfile = () => request.get('/front/user/profile')
+export const updateUserProfile = (data) => request.put('/front/user/profile', data)
 export const getMyLikedArticles = (params) => request.get('/front/user/likes', { params: { ...params, type: 'ARTICLE' } })
 export const getMyCollectedArticles = (params) => request.get('/front/user/favorites', { params: { ...params, type: 'ARTICLE' } })
+
+// 公开用户主页
+export const getPublicUserInfo = (userId) => request.get(`/front/user/public/${userId}`)
+export const getUserPublicArticles = (userId, params) => request.get(`/front/user/public/${userId}/articles`, { params })
+export const getUserPublicLikes = (userId, params) => request.get(`/front/user/public/${userId}/likes`, { params })
+export const getUserPublicFavorites = (userId, params) => request.get(`/front/user/public/${userId}/favorites`, { params })
+
 
 // 论坛相关
 export const getForumSections = () => request.get('/front/forum/sections')

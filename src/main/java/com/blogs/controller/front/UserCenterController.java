@@ -10,9 +10,11 @@ import com.blogs.entity.Favorite;
 import com.blogs.entity.ForumPost;
 import com.blogs.entity.LikeRecord;
 import com.blogs.entity.Notification;
+import com.blogs.entity.User;
 import com.blogs.repository.CommentRepository;
 import com.blogs.repository.FavoriteRepository;
 import com.blogs.repository.LikeRecordRepository;
+import com.blogs.repository.UserRepository;
 import com.blogs.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -48,6 +50,9 @@ public class UserCenterController {
 
     @Autowired
     private CommentRepository commentRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     /**
      * 获取个人信息
@@ -104,7 +109,9 @@ public class UserCenterController {
         String username = getCurrentUsername();
         UserDTO user = userService.getUserInfo(username);
 
-        var pageable = org.springframework.data.domain.PageRequest.of(page - 1, size, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt"));
+        var pageable = org.springframework.data.domain.PageRequest.of(page - 1, size,
+                org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC,
+                        "createdAt"));
         var p = (type == null || type.isBlank())
                 ? favoriteRepository.findByUserId(user.getId(), pageable)
                 : favoriteRepository.findByUserIdAndType(user.getId(), type.trim().toUpperCase(), pageable);
@@ -139,7 +146,9 @@ public class UserCenterController {
         String username = getCurrentUsername();
         UserDTO user = userService.getUserInfo(username);
 
-        var pageable = org.springframework.data.domain.PageRequest.of(page - 1, size, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt"));
+        var pageable = org.springframework.data.domain.PageRequest.of(page - 1, size,
+                org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC,
+                        "createdAt"));
         var p = likeRecordRepository.findByUserId(user.getId(), pageable);
 
         List<UserActionItemVO> list = new ArrayList<>();
@@ -172,7 +181,9 @@ public class UserCenterController {
         String username = getCurrentUsername();
         UserDTO user = userService.getUserInfo(username);
 
-        var pageable = org.springframework.data.domain.PageRequest.of(page - 1, size, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt"));
+        var pageable = org.springframework.data.domain.PageRequest.of(page - 1, size,
+                org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC,
+                        "createdAt"));
         var p = commentRepository.findByUser_IdOrderByCreatedAtDesc(user.getId(), pageable);
         List<CommentVO> list = p.getContent().stream().map(CommentVO::fromEntity).toList();
         return Result.success(PageResult.of(list, p.getTotalElements(), page, size));
@@ -188,8 +199,122 @@ public class UserCenterController {
         return Result.success();
     }
 
+    // ==================== 公开用户主页相关 ====================
+
+    /**
+     * 获取公开用户信息（用于查看其他用户主页）
+     */
+    @GetMapping("/public/{userId}")
+    public Result<com.blogs.dto.PublicUserVO> getPublicUserInfo(@PathVariable Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("用户不存在"));
+        return Result.success(com.blogs.dto.PublicUserVO.fromEntity(user));
+    }
+
+    /**
+     * 获取用户的公开文章列表
+     */
+    @GetMapping("/public/{userId}/articles")
+    public Result<PageResult<ArticleVO>> getUserPublicArticles(
+            @PathVariable Long userId,
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer size) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("用户不存在"));
+        return Result.success(articleService.getUserArticleList(user.getUsername(), page, size));
+    }
+
+    /**
+     * 获取用户的点赞列表（根据隐私设置）
+     */
+    @GetMapping("/public/{userId}/likes")
+    public Result<PageResult<UserActionItemVO>> getUserPublicLikes(
+            @PathVariable Long userId,
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer size) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("用户不存在"));
+
+        // 检查隐私设置
+        if (user.getLikesPublic() == null || !user.getLikesPublic()) {
+            // 检查是否是本人
+            String currentUsername = getCurrentUsername();
+            UserDTO currentUser = userService.getUserInfo(currentUsername);
+            if (!currentUser.getId().equals(userId)) {
+                throw new RuntimeException("该用户的点赞列表不公开");
+            }
+        }
+
+        var pageable = org.springframework.data.domain.PageRequest.of(page - 1, size,
+                org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC,
+                        "createdAt"));
+        var p = likeRecordRepository.findByUserId(userId, pageable);
+
+        List<UserActionItemVO> list = new ArrayList<>();
+        for (LikeRecord r : p.getContent()) {
+            UserActionItemVO vo = new UserActionItemVO();
+            vo.setTargetId(r.getTargetId());
+            vo.setCreatedAt(r.getCreatedAt());
+            if ("ARTICLE".equalsIgnoreCase(r.getType())) {
+                vo.setContentType("ARTICLE");
+                vo.setTitle(articleService.getArticle(r.getTargetId()).getTitle());
+            } else {
+                vo.setContentType("FORUM_POST");
+                vo.setTitle(forumService.getPostWithoutIncrement(r.getTargetId()).getTitle());
+            }
+            list.add(vo);
+        }
+        return Result.success(PageResult.of(list, p.getTotalElements(), page, size));
+    }
+
+    /**
+     * 获取用户的收藏列表（根据隐私设置）
+     */
+    @GetMapping("/public/{userId}/favorites")
+    public Result<PageResult<UserActionItemVO>> getUserPublicFavorites(
+            @PathVariable Long userId,
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer size) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("用户不存在"));
+
+        // 检查隐私设置
+        if (user.getFavoritesPublic() == null || !user.getFavoritesPublic()) {
+            // 检查是否是本人
+            String currentUsername = getCurrentUsername();
+            UserDTO currentUser = userService.getUserInfo(currentUsername);
+            if (!currentUser.getId().equals(userId)) {
+                throw new RuntimeException("该用户的收藏列表不公开");
+            }
+        }
+
+        var pageable = org.springframework.data.domain.PageRequest.of(page - 1, size,
+                org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC,
+                        "createdAt"));
+        var p = favoriteRepository.findByUserId(userId, pageable);
+
+        List<UserActionItemVO> list = new ArrayList<>();
+        for (Favorite f : p.getContent()) {
+            UserActionItemVO vo = new UserActionItemVO();
+            vo.setTargetId(f.getTargetId());
+            vo.setCreatedAt(f.getCreatedAt());
+            if ("ARTICLE".equalsIgnoreCase(f.getType())) {
+                vo.setContentType("ARTICLE");
+                ArticleVO a = articleService.getArticle(f.getTargetId());
+                vo.setTitle(a.getTitle());
+            } else {
+                vo.setContentType("FORUM_POST");
+                ForumPost post = forumService.getPostWithoutIncrement(f.getTargetId());
+                vo.setTitle(post.getTitle());
+            }
+            list.add(vo);
+        }
+        return Result.success(PageResult.of(list, p.getTotalElements(), page, size));
+    }
+
     private String getCurrentUsername() {
         return SecurityContextHolder.getContext().getAuthentication().getName();
     }
 }
-

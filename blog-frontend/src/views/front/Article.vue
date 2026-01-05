@@ -1,6 +1,23 @@
 <template>
-  <div class="article-page" v-if="article">
-    <div class="content-wrapper">
+  <div class="article-page" v-loading="loading">
+    <!-- 错误提示 -->
+    <el-alert
+      v-if="error"
+      :title="error"
+      type="error"
+      show-icon
+      center
+      :closable="false"
+      description="您可以返回首页或尝试刷新页面"
+      style="margin: 20px auto; max-width: 800px;"
+    >
+      <div style="margin-top: 15px; text-align: center;">
+        <el-button type="primary" @click="$router.push('/')">回到首页</el-button>
+      </div>
+    </el-alert>
+
+    <!-- 文章内容 -->
+    <div class="content-wrapper" v-else-if="article">
       <!-- 文章主体 -->
       <article class="article-main">
         <header class="article-header">
@@ -26,11 +43,11 @@
             </div>
           </div>
           <!-- 作者信息 -->
-          <div class="author-info" v-if="article.userNickname || article.userId">
-            <el-avatar :size="32" :src="article.userAvatar || undefined">
-              {{ (article.userNickname || '匿').charAt(0) }}
+          <div class="author-info" v-if="article.authorNickname || article.userId">
+            <el-avatar :size="32" :src="article.authorAvatar || undefined">
+              {{ (article.authorNickname || '匿').charAt(0) }}
             </el-avatar>
-            <span class="author-name clickable" @click="goToAuthorPage">{{ article.userNickname || `用户${article.userId}` }}</span>
+            <span class="author-name clickable" @click="goToAuthorPage">{{ article.authorNickname || `用户${article.userId}` }}</span>
           </div>
           <div class="article-meta">
             <span><el-icon><Calendar /></el-icon> 发布于 {{ formatDate(article.createdAt) }}</span>
@@ -164,7 +181,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick, computed } from 'vue'
+import { ref, onMounted, nextTick, computed, watch } from 'vue'
+
 import { useRoute, useRouter } from 'vue-router'
 import { getArticle, getRelatedArticles, getArticleComments, likeArticle, unlikeArticle, collectArticle, uncollectArticle, createComment, deleteComment as deleteCommentApi } from '@/api/front'
 import { deleteArticle } from '@/api/admin'
@@ -197,6 +215,9 @@ const toc = ref([])
 const isLiked = ref(false)
 const isCollected = ref(false)
 const submitting = ref(false)
+const loading = ref(false)
+const error = ref('')
+
 
 const commentForm = ref({
   content: ''
@@ -319,10 +340,20 @@ const handleEditArticle = () => {
 
 // 跳转到作者主页
 const goToAuthorPage = () => {
-  if (article.value.userId) {
-    router.push(`/user/profile?userId=${article.value.userId}`)
+  if (!article.value || !article.value.userId) {
+    ElMessage.warning('无法获取作者信息')
+    return
+  }
+  
+  // 如果是当前登录用户，跳转到个人中心
+  if (userStore.isLoggedIn && article.value.userId === Number(userStore.userInfo.id)) {
+    router.push('/user/profile')
+  } else {
+    // 跳转到公开用户主页
+    router.push(`/user/${article.value.userId}`)
   }
 }
+
 
 const loadComments = async () => {
   const res = await getArticleComments(route.params.id)
@@ -351,9 +382,18 @@ const generateToc = () => {
   })
 }
 
-onMounted(async () => {
+const loadArticle = async () => {
+  const id = route.params.id
+  if (!id || id === 'undefined' || id === 'null') {
+    error.value = '文章不存在'
+    return
+  }
+
+  loading.value = true
+  error.value = ''
   try {
-    const res = await getArticle(route.params.id)
+    const res = await getArticle(id)
+
     article.value = res.data
     
     // 检查本地缓存的点赞收藏状态
@@ -369,10 +409,28 @@ onMounted(async () => {
     // 加载评论
     loadComments()
   } catch (e) {
+    if (e.response && e.response.status === 404) {
+      error.value = '文章不存在或已被删除'
+    } else {
+      error.value = '加载失败，请稍后重试'
+    }
     console.error(e)
+  } finally {
+    loading.value = false
+  }
+}
+
+
+watch(() => route.params.id, (newId) => {
+  if (newId && route.name === 'Article') {
+    loadArticle()
   }
 })
+
+onMounted(loadArticle)
+
 </script>
+
 
 <style scoped>
 .article-page {

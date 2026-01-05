@@ -104,10 +104,20 @@ const loadData = async () => {
 
 // 跳转到作者主页
 const goToAuthorPage = () => {
-  if (post.value.userId) {
-    router.push(`/user/profile?userId=${post.value.userId}`)
+  if (!post.value || !post.value.userId) {
+    ElMessage.warning('无法获取作者信息')
+    return
+  }
+  
+  // 如果是当前登录用户，跳转到个人中心
+  if (userStore.isLoggedIn && post.value.userId === Number(userStore.id)) {
+    router.push('/user/profile')
+  } else {
+    // 跳转到公开用户主页
+    router.push(`/user/${post.value.userId}`)
   }
 }
+
 
 const handleLike = async () => {
   if (!userStore.isLoggedIn) return ElMessage.warning('请先登录')

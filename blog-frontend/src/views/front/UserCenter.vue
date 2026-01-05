@@ -117,8 +117,28 @@
               <el-input v-model="profileForm.avatar" />
             </el-form-item>
             <el-form-item label="个人简介">
-              <el-input v-model="profileForm.bio" type="textarea" />
+              <el-input v-model="profileForm.bio" type="textarea" :rows="3" />
             </el-form-item>
+            
+            <el-divider>社交信息</el-divider>
+            <el-form-item label="GitHub">
+              <el-input v-model="profileForm.github" placeholder="你的GitHub主页链接" />
+            </el-form-item>
+            <el-form-item label="知乎">
+              <el-input v-model="profileForm.zhihu" placeholder="你的知乎主页链接" />
+            </el-form-item>
+            <el-form-item label="微信">
+              <el-input v-model="profileForm.weixin" placeholder="微信号" />
+            </el-form-item>
+
+            <el-divider>隐私设置</el-divider>
+            <el-form-item label="公开点赞">
+              <el-switch v-model="profileForm.likesPublic" active-text="允许他人查看我的点赞列表" />
+            </el-form-item>
+            <el-form-item label="公开收藏">
+              <el-switch v-model="profileForm.favoritesPublic" active-text="允许他人查看我的收藏列表" />
+            </el-form-item>
+
             <el-form-item>
               <el-button type="primary" @click="updateProfile">保存修改</el-button>
             </el-form-item>
@@ -133,7 +153,7 @@
 import { ref, onMounted, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
-import { getMyArticles, getMyPosts, getMyNotifications, getUserProfile, deletePost, getMyLikedArticles, getMyCollectedArticles } from '@/api/front'
+import { getMyArticles, getMyPosts, getMyNotifications, getUserProfile, updateUserProfile, deletePost, getMyLikedArticles, getMyCollectedArticles } from '@/api/front'
 import { deleteArticle } from '@/api/admin' // 注册用户也能删自己的
 import { ElMessage, ElMessageBox } from 'element-plus'
 
@@ -150,7 +170,12 @@ const notifications = ref([])
 const profileForm = reactive({
   nickname: '',
   avatar: '',
-  bio: ''
+  bio: '',
+  github: '',
+  zhihu: '',
+  weixin: '',
+  likesPublic: true,
+  favoritesPublic: true
 })
 
 const statusMap = {
@@ -180,7 +205,17 @@ const loadData = async () => {
     notifications.value = noticeRes.status === 'fulfilled' && noticeRes.value?.data?.list ? noticeRes.value.data.list : []
     
     if (profileRes.status === 'fulfilled' && profileRes.value?.data) {
-      Object.assign(profileForm, profileRes.value.data)
+      const data = profileRes.value.data
+      Object.assign(profileForm, {
+        nickname: data.nickname,
+        avatar: data.avatar,
+        bio: data.bio,
+        github: data.github,
+        zhihu: data.zhihu,
+        weixin: data.weixin,
+        likesPublic: data.likesPublic !== false, // 默认true
+        favoritesPublic: data.favoritesPublic !== false // 默认true
+      })
     }
   } catch (e) {
     console.error('加载用户中心数据失败:', e)
@@ -214,9 +249,19 @@ const handleDeletePost = (id) => {
   })
 }
 
-const updateProfile = () => {
-  // TODO: 调用API更新资料
-  ElMessage.success('资料已更新')
+const updateProfile = async () => {
+  try {
+    await updateUserProfile(profileForm)
+    // 更新store中的信息
+    userStore.userInfo.nickname = profileForm.nickname
+    userStore.userInfo.avatar = profileForm.avatar
+    ElMessage.success('资料已更新')
+  } catch (e) {
+    // 检查是否是后端返回的错误信息
+    const msg = e.response?.data?.message || '更新失败，请重试'
+    ElMessage.error(msg)
+    console.error(e)
+  }
 }
 
 const formatDate = (date) => {

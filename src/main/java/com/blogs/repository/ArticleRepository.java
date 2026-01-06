@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -63,8 +64,12 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
         @Query("SELECT SUM(a.likeCount) FROM Article a")
         Long sumLikeCount();
 
-        // 热门文章
+        // 热门文章（按阅读量）
         Page<Article> findByStatusOrderByViewCountDesc(Integer status, Pageable pageable);
+
+        // 热门文章（按热度：阅读量+点赞数*2），阅读量相同时按创建时间倒序
+        @Query("SELECT a FROM Article a WHERE a.status = :status ORDER BY (a.viewCount + a.likeCount * 2) DESC, a.createdAt DESC")
+        Page<Article> findByStatusOrderByHotDesc(@Param("status") Integer status, Pageable pageable);
 
         // 相关推荐
         @Query("SELECT a FROM Article a WHERE a.status = 1 AND a.category.id = :categoryId AND a.id != :articleId ORDER BY a.createdAt DESC")

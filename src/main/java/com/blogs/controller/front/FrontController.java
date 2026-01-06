@@ -23,41 +23,49 @@ import java.util.Map;
 @RestController
 @RequestMapping("/front")
 public class FrontController {
-    
+
     @Autowired
     private ArticleService articleService;
-    
+
     @Autowired
     private CategoryService categoryService;
-    
+
     @Autowired
     private TagService tagService;
-    
+
     @Autowired
     private CommentService commentService;
-    
+
     @Autowired
     private FriendLinkService friendLinkService;
-    
+
     @Autowired
     private UserService userService;
-    
+
     @Autowired
     private SiteConfigService siteConfigService;
-    
+
     // ==================== 文章相关 ====================
-    
+
     /**
      * 首页文章列表
+     * 
+     * @param sort 排序方式：latest-最新（默认），hot-最热
      */
     @GetMapping("/articles")
     public Result<PageResult<ArticleVO>> getArticleList(
             @RequestParam(defaultValue = "1") Integer page,
-            @RequestParam(defaultValue = "10") Integer size) {
-        PageResult<ArticleVO> result = articleService.getPublishedArticleList(page, size);
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(defaultValue = "latest") String sort) {
+        PageResult<ArticleVO> result;
+        if ("hot".equalsIgnoreCase(sort)) {
+            result = articleService.getPublishedArticleListByHot(page, size);
+        } else {
+            result = articleService.getPublishedArticleList(page, size);
+        }
         return Result.success(result);
     }
-    
+
     /**
      * 文章详情
      */
@@ -68,7 +76,7 @@ public class FrontController {
         articleService.incrementViewCount(id);
         return Result.success(article);
     }
-    
+
     /**
      * 验证文章密码
      */
@@ -77,7 +85,7 @@ public class FrontController {
         boolean valid = articleService.verifyPassword(id, password);
         return Result.success(valid);
     }
-    
+
     /**
      * 按分类获取文章
      */
@@ -89,7 +97,7 @@ public class FrontController {
         PageResult<ArticleVO> result = articleService.getArticlesByCategory(categoryId, page, size);
         return Result.success(result);
     }
-    
+
     /**
      * 按标签获取文章
      */
@@ -101,7 +109,7 @@ public class FrontController {
         PageResult<ArticleVO> result = articleService.getArticlesByTag(tagId, page, size);
         return Result.success(result);
     }
-    
+
     /**
      * 时间归档列表
      */
@@ -110,7 +118,7 @@ public class FrontController {
         List<ArchiveDTO> archives = articleService.getArchives();
         return Result.success(archives);
     }
-    
+
     /**
      * 按年月获取文章
      */
@@ -123,9 +131,9 @@ public class FrontController {
         PageResult<ArticleVO> result = articleService.getArticlesByYearMonth(year, month, page, size);
         return Result.success(result);
     }
-    
+
     // ==================== 互动相关 ====================
-    
+
     /**
      * 点赞文章
      */
@@ -139,7 +147,7 @@ public class FrontController {
         }
         return Result.success();
     }
-    
+
     /**
      * 取消点赞
      */
@@ -153,7 +161,7 @@ public class FrontController {
         }
         return Result.success();
     }
-    
+
     /**
      * 收藏文章
      */
@@ -167,7 +175,7 @@ public class FrontController {
         }
         return Result.success();
     }
-    
+
     /**
      * 取消收藏
      */
@@ -181,9 +189,9 @@ public class FrontController {
         }
         return Result.success();
     }
-    
+
     // ==================== 分类标签 ====================
-    
+
     /**
      * 获取所有分类
      */
@@ -192,7 +200,7 @@ public class FrontController {
         List<Category> categories = categoryService.getAllCategories();
         return Result.success(categories);
     }
-    
+
     /**
      * 获取分类详情
      */
@@ -201,7 +209,7 @@ public class FrontController {
         Category category = categoryService.getCategory(id);
         return Result.success(category);
     }
-    
+
     /**
      * 获取所有标签
      */
@@ -210,7 +218,7 @@ public class FrontController {
         List<Tag> tags = tagService.getAllTags();
         return Result.success(tags);
     }
-    
+
     /**
      * 获取标签详情
      */
@@ -219,7 +227,7 @@ public class FrontController {
         Tag tag = tagService.getTag(id);
         return Result.success(tag);
     }
-    
+
     /**
      * 热门文章
      */
@@ -228,7 +236,7 @@ public class FrontController {
         List<ArticleVO> articles = articleService.getHotArticles(limit);
         return Result.success(articles);
     }
-    
+
     /**
      * 相关推荐
      */
@@ -239,9 +247,9 @@ public class FrontController {
         List<ArticleVO> articles = articleService.getRelatedArticles(id, limit);
         return Result.success(articles);
     }
-    
+
     // ==================== 博主信息 ====================
-    
+
     /**
      * 获取博主信息 (兼容旧接口名，实际获取当前登录用户信息)
      */
@@ -254,7 +262,7 @@ public class FrontController {
         UserDTO user = userService.getUserInfo(username);
         return Result.success(user);
     }
-    
+
     /**
      * 获取当前登录用户信息
      */
@@ -267,9 +275,9 @@ public class FrontController {
         UserDTO user = userService.getUserInfo(username);
         return Result.success(user);
     }
-    
+
     // ==================== 评论相关 ====================
-    
+
     /**
      * 获取文章评论
      */
@@ -278,9 +286,9 @@ public class FrontController {
         List<CommentVO> comments = commentService.getArticleComments(id);
         return Result.success(comments);
     }
-    
+
     // ==================== 其他 ====================
-    
+
     /**
      * 获取最新评论
      */
@@ -289,7 +297,7 @@ public class FrontController {
         List<CommentVO> comments = commentService.getLatestComments();
         return Result.success(comments);
     }
-    
+
     /**
      * 获取管理员信息 (原博主信息)
      */
@@ -303,7 +311,7 @@ public class FrontController {
                 .orElse(null);
         return Result.success(admin);
     }
-    
+
     /**
      * 获取友情链接
      */
@@ -312,7 +320,7 @@ public class FrontController {
         List<FriendLink> links = friendLinkService.getVisibleFriendLinks();
         return Result.success(links);
     }
-    
+
     /**
      * 获取站点配置
      */

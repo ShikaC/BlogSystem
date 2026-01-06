@@ -272,6 +272,20 @@ public class ArticleService {
     }
 
     /**
+     * 前台文章列表 - 按热度排序（阅读量+点赞数*2）
+     */
+    public PageResult<ArticleVO> getPublishedArticleListByHot(Integer page, Integer size) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+        Page<Article> articlePage = articleRepository.findByStatusOrderByHotDesc(1, pageable);
+
+        List<ArticleVO> list = articlePage.getContent().stream()
+                .map(ArticleVO::fromEntityWithoutContent)
+                .collect(Collectors.toList());
+
+        return PageResult.of(list, articlePage.getTotalElements(), page, size);
+    }
+
+    /**
      * 按分类获取文章
      */
     public PageResult<ArticleVO> getArticlesByCategory(Long categoryId, Integer page, Integer size) {

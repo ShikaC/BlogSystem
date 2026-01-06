@@ -3,6 +3,22 @@
     <div class="content-wrapper">
       <!-- 文章列表 -->
       <div class="article-list">
+        <!-- 排序切换 -->
+        <div class="sort-tabs">
+          <span 
+            :class="['sort-tab', { active: sortType === 'latest' }]" 
+            @click="changeSortType('latest')"
+          >
+            🕐 最新
+          </span>
+          <span 
+            :class="['sort-tab', { active: sortType === 'hot' }]" 
+            @click="changeSortType('hot')"
+          >
+            🔥 最热
+          </span>
+        </div>
+        
         <article v-for="article in articles" :key="article.id" class="article-card" @click="goToArticle(article.id)">
           <div class="article-cover" v-if="article.coverImage">
             <img :src="article.coverImage" :alt="article.title" loading="lazy" />
@@ -111,6 +127,7 @@ const page = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
 const loading = ref(false)
+const sortType = ref('latest') // 排序类型：latest-最新，hot-最热
 
 const formatDate = (dateStr) => {
   if (!dateStr) return ''
@@ -140,10 +157,23 @@ const handlePageChange = (newPage) => {
   loadArticles()
 }
 
+// 切换排序方式
+const changeSortType = (type) => {
+  if (sortType.value !== type) {
+    sortType.value = type
+    page.value = 1 // 切换排序时重置为第一页
+    loadArticles()
+  }
+}
+
 const loadArticles = async () => {
   loading.value = true
   try {
-    const res = await getArticles({ page: page.value, size: pageSize.value })
+    const res = await getArticles({ 
+      page: page.value, 
+      size: pageSize.value,
+      sort: sortType.value 
+    })
     if (res && res.data) {
       articles.value = res.data.list || []
       total.value = res.data.total || 0
@@ -242,6 +272,35 @@ onMounted(async () => {
 
 .article-list {
   flex: 1;
+}
+
+/* 排序切换 */
+.sort-tabs {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+  padding: 12px 16px;
+  background: var(--card-bg, #fff);
+  border-radius: 8px;
+}
+
+.sort-tab {
+  font-size: 15px;
+  cursor: pointer;
+  color: var(--meta-color, #999);
+  padding: 6px 12px;
+  border-radius: 4px;
+  transition: all 0.3s;
+}
+
+.sort-tab:hover {
+  color: #409eff;
+}
+
+.sort-tab.active {
+  color: #409eff;
+  background: rgba(64, 158, 255, 0.1);
+  font-weight: 500;
 }
 
 .article-card {

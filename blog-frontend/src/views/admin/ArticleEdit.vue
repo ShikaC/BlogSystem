@@ -78,7 +78,17 @@
             </el-form-item>
 
             <el-form-item label="封面图">
-              <el-input v-model="form.coverImage" placeholder="封面图URL" />
+              <div class="cover-upload">
+                <el-input v-model="form.coverImage" placeholder="封面图URL" style="flex: 1;" />
+                <el-upload
+                  :show-file-list="false"
+                  :http-request="handleCoverUpload"
+                  accept="image/*"
+                >
+                  <el-button size="small" type="primary">上传</el-button>
+                </el-upload>
+              </div>
+              <el-image v-if="form.coverImage" :src="form.coverImage" fit="cover" class="cover-preview" />
             </el-form-item>
 
             <el-form-item label="访问密码">
@@ -99,13 +109,15 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { getAdminArticle, saveArticle, getAdminCategories, getAdminTags } from '@/api/admin'
-import { ElMessage } from 'element-plus'
+import { ref, reactive, onMounted, onBeforeUnmount, computed, watch } from 'vue'
+import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
+import { getAdminArticle, saveArticle, getAdminCategories, getAdminTags, createTag, uploadFile } from '@/api/admin'
+import { uploadUserImage } from '@/api/front'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { marked } from 'marked'
 import hljs from 'highlight.js'
 import 'highlight.js/styles/github.css'
+import { useUserStore } from '@/stores/user'
 
 // 配置 marked
 marked.setOptions({
@@ -177,6 +189,7 @@ const doSave = async () => {
   try {
     const res = await saveArticle(form)
     ElMessage.success(isEdit.value ? '更新成功' : '保存成功')
+    hasUnsavedChanges.value = false
     if (!isEdit.value) {
       router.push(`/admin/article/edit/${res.data.id}`)
     }
@@ -184,6 +197,68 @@ const doSave = async () => {
     saving.value = false
   }
 }
+
+// 封面图上传
+const userStore = useUserStore()
+const handleCoverUpload = async ({ file }) => {
+  try {
+    let res
+    if (userStore.isAdmin) {
+      res = await uploadFile(file, 'cover')
+    } else {
+      res = await uploadUserImage(file)
+    }
+    form.coverImage = res.data.fileUrl
+    ElMessage.success('上传成功')
+  } catch (e) {
+    ElMessage.error('上传失败')
+  }
+}
+
+// 自动保存和未保存提示
+const hasUnsavedChanges = ref(false)
+const originalContent = ref('')
+
+watch(() => form.content, (newVal) => {
+  if (originalContent.value && newVal !== originalContent.value) {
+    hasUnsavedChanges.value = true
+  }
+})
+
+watch(() => form.title, () => {
+  hasUnsavedChanges.value = true
+})
+
+// 自动保存草稿（每60秒）
+let autoSaveTimer = null
+const autoSaveDraft = async () => {
+  if (form.title && form.content && hasUnsavedChanges.value && form.status === 0) {
+    try {
+      await saveArticle(form)
+      hasUnsavedChanges.value = false
+      console.log('草稿已自动保存')
+    } catch (e) {
+      console.error('自动保存失败', e)
+    }
+  }
+}
+
+// 页面离开前提示
+onBeforeRouteLeave((to, from, next) => {
+  if (hasUnsavedChanges.value) {
+    ElMessageBox.confirm('您有未保存的内容，确定要离开吗？', '提示', {
+      confirmButtonText: '离开',
+      cancelButtonText: '取消',
+      type: 'warning'
+    }).then(() => {
+      next()
+    }).catch(() => {
+      next(false)
+    })
+  } else {
+    next()
+  }
+})
 
 onMounted(async () => {
   // 加载分类和标签
@@ -210,6 +285,16 @@ onMounted(async () => {
     form.seoTitle = article.seoTitle || ''
     form.seoKeywords = article.seoKeywords || ''
     form.seoDescription = article.seoDescription || ''
+    originalContent.value = article.content || ''
+  }
+  
+  // 启动自动保存定时器
+  autoSaveTimer = setInterval(autoSaveDraft, 60000)
+})
+
+onBeforeUnmount(() => {
+  if (autoSaveTimer) {
+    clearInterval(autoSaveTimer)
   }
 })
 </script>
@@ -319,5 +404,18 @@ onMounted(async () => {
   gap: 10px;
   justify-content: flex-end;
 }
+
+.cover-upload {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.cover-preview {
+  margin-top: 10px;
+  width: 100%;
+  max-height: 150px;
+  border-radius: 4px;
+}
 </style>
-```
+

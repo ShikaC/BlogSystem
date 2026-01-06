@@ -16,9 +16,12 @@ import com.blogs.repository.FavoriteRepository;
 import com.blogs.repository.LikeRecordRepository;
 import com.blogs.repository.UserRepository;
 import com.blogs.service.*;
+import com.blogs.entity.Media;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.IOException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,6 +56,9 @@ public class UserCenterController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private MediaService mediaService;
 
     /**
      * 获取个人信息
@@ -330,6 +336,104 @@ public class UserCenterController {
         }
         return Result.success(PageResult.of(list, p.getTotalElements(), page, size));
 
+    }
+
+    // ==================== 图片上传 ====================
+
+    /**
+     * 用户上传图片（用于文章封面、内容图片等）
+     */
+    @PostMapping("/upload")
+    public Result<Media> uploadImage(@RequestParam("file") MultipartFile file) throws IOException {
+        Media media = mediaService.uploadFile(file, "user-upload");
+        return Result.success(media);
+    }
+
+    // ==================== 用户统计信息 ====================
+
+    /**
+     * 获取用户统计数据（文章总数、阅读量、点赞数等）
+     */
+    @GetMapping("/statistics")
+    public Result<java.util.Map<String, Object>> getUserStatistics() {
+        String username = getCurrentUsername();
+        UserDTO user = userService.getUserInfo(username);
+
+        // 获取用户的所有文章
+        var articlePage = articleService.getUserArticleList(username, 1, 1000);
+
+        long totalArticles = articlePage.getTotal();
+        long publishedArticles = 0;
+        long draftArticles = 0;
+        long totalViews = 0;
+        long totalLikes = 0;
+        long totalCollects = 0;
+        long totalComments = 0;
+
+        for (ArticleVO article : articlePage.getList()) {
+            if (article.getStatus() == 1)
+                publishedArticles++;
+            else if (article.getStatus() == 0)
+                draftArticles++;
+            totalViews += article.getViewCount() != null ? article.getViewCount() : 0;
+            totalLikes += article.getLikeCount() != null ? article.getLikeCount() : 0;
+            totalCollects += article.getCollectCount() != null ? article.getCollectCount() : 0;
+            totalComments += article.getCommentCount() != null ? article.getCommentCount() : 0;
+        }
+
+        // 获取帖子统计
+        var postPage = forumService.getMyPosts(user.getId(), 1, 1000);
+        long totalPosts = postPage.getTotal();
+
+        java.util.Map<String, Object> stats = new java.util.HashMap<>();
+        stats.put("totalArticles", totalArticles);
+        stats.put("publishedArticles", publishedArticles);
+        stats.put("draftArticles", draftArticles);
+        stats.put("totalViews", totalViews);
+        stats.put("totalLikes", totalLikes);
+        stats.put("totalCollects", totalCollects);
+        stats.put("totalComments", totalComments);
+        stats.put("totalPosts", totalPosts);
+
+        return Result.success(stats);
+    }
+
+    // ==================== 按状态筛选文章 ====================
+
+    /**
+     * 获取我的文章（带状态筛选）
+     */
+    @GetMapping("/articles/filter")
+    public Result<PageResult<ArticleVO>> getMyArticlesFiltered(
+            @RequestParam(required = false) Integer status,
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer size) {
+        String username = getCurrentUsername();
+        return Result.success(articleService.getUserArticleListWithStatus(username, status, page, size));
+    }
+
+    // ==================== 批量操作 ====================
+
+    /**
+     * 批量下架文章（将状态改为私密）
+     */
+    @PostMapping("/articles/batch-unpublish")
+    public Result<Void> batchUnpublishArticles(@RequestBody java.util.List<Long> ids) {
+        String username = getCurrentUsername();
+        UserDTO user = userService.getUserInfo(username);
+        articleService.batchUpdateStatus(ids, 2, user.getId());
+        return Result.success();
+    }
+
+    /**
+     * 批量删除文章（移到回收站）
+     */
+    @PostMapping("/articles/batch-delete")
+    public Result<Void> batchDeleteArticles(@RequestBody java.util.List<Long> ids) {
+        String username = getCurrentUsername();
+        UserDTO user = userService.getUserInfo(username);
+        articleService.batchUpdateStatus(ids, 3, user.getId());
+        return Result.success();
     }
 
     private String getCurrentUsername() {

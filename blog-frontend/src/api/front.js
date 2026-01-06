@@ -34,12 +34,29 @@ export const deleteComment = (id) => request.delete(`/front/comments/${id}`)
 
 // 用户相关
 export const getMyArticles = (params) => request.get('/front/user/articles', { params })
+export const getMyArticlesFiltered = (params) => request.get('/front/user/articles/filter', { params })
 export const getMyPosts = (params) => request.get('/front/user/posts', { params })
 export const getMyNotifications = (params) => request.get('/front/user/notifications', { params })
 export const getUserProfile = () => request.get('/front/user/profile')
 export const updateUserProfile = (data) => request.put('/front/user/profile', data)
 export const getMyLikedArticles = (params) => request.get('/front/user/likes', { params: { ...params, type: 'ARTICLE' } })
 export const getMyCollectedArticles = (params) => request.get('/front/user/favorites', { params: { ...params, type: 'ARTICLE' } })
+
+// 用户统计
+export const getUserStatistics = () => request.get('/front/user/statistics')
+
+// 用户图片上传
+export const uploadUserImage = (file) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    return request.post('/front/user/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    })
+}
+
+// 批量操作
+export const batchUnpublishArticles = (ids) => request.post('/front/user/articles/batch-unpublish', ids)
+export const batchDeleteMyArticles = (ids) => request.post('/front/user/articles/batch-delete', ids)
 
 // 公开用户主页
 export const getPublicUserInfo = (userId) => request.get(`/front/user/public/${userId}`)

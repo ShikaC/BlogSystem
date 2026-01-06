@@ -388,6 +388,44 @@ public class ArticleService {
     }
 
     /**
+     * 获取指定用户的文章列表（带状态筛选）
+     */
+    public PageResult<ArticleVO> getUserArticleListWithStatus(String username, Integer status, Integer page,
+            Integer size) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+        Page<Article> articlePage;
+
+        if (status != null) {
+            articlePage = articleRepository.findByUser_UsernameAndStatusOrderByCreatedAtDesc(username, status,
+                    pageable);
+        } else {
+            articlePage = articleRepository.findByUser_UsernameOrderByCreatedAtDesc(username, pageable);
+        }
+
+        List<ArticleVO> list = articlePage.getContent().stream()
+                .map(ArticleVO::fromEntityWithoutContent)
+                .collect(Collectors.toList());
+
+        return PageResult.of(list, articlePage.getTotalElements(), page, size);
+    }
+
+    /**
+     * 批量更新文章状态（用户只能操作自己的文章）
+     */
+    public void batchUpdateStatus(List<Long> ids, Integer status, Long userId) {
+        for (Long id : ids) {
+            Article article = articleRepository.findById(id)
+                    .orElseThrow(() -> new BusinessException("文章不存在"));
+            // 权限校验
+            if (!article.getUserId().equals(userId)) {
+                throw new BusinessException("无权操作他人文章");
+            }
+            article.setStatus(status);
+            articleRepository.save(article);
+        }
+    }
+
+    /**
      * 增加阅读量
      */
     public void incrementViewCount(Long id) {

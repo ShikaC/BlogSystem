@@ -1,5 +1,6 @@
 <template>
   <div class="user-center">
+    <!-- 用户信息卡片 -->
     <el-card>
       <div class="user-profile">
         <el-avatar :size="80" :src="userStore.userInfo.avatar || undefined">{{ (userStore.displayNickname || '未').charAt(0) }}</el-avatar>
@@ -14,18 +15,63 @@
       </div>
     </el-card>
 
+    <!-- 统计信息卡片 -->
+    <div class="stats-cards" v-if="statistics">
+      <el-card class="stat-card">
+        <div class="stat-value">{{ statistics.totalArticles || 0 }}</div>
+        <div class="stat-label">文章总数</div>
+      </el-card>
+      <el-card class="stat-card">
+        <div class="stat-value">{{ statistics.publishedArticles || 0 }}</div>
+        <div class="stat-label">已发布</div>
+      </el-card>
+      <el-card class="stat-card">
+        <div class="stat-value">{{ statistics.totalViews || 0 }}</div>
+        <div class="stat-label">总阅读</div>
+      </el-card>
+      <el-card class="stat-card">
+        <div class="stat-value">{{ statistics.totalLikes || 0 }}</div>
+        <div class="stat-label">总点赞</div>
+      </el-card>
+      <el-card class="stat-card">
+        <div class="stat-value">{{ statistics.totalCollects || 0 }}</div>
+        <div class="stat-label">总收藏</div>
+      </el-card>
+      <el-card class="stat-card">
+        <div class="stat-value">{{ statistics.totalPosts || 0 }}</div>
+        <div class="stat-label">帖子数</div>
+      </el-card>
+    </div>
+
     <div class="center-content">
       <el-tabs v-model="activeTab" type="border-card">
         <!-- 我的文章 -->
         <el-tab-pane label="我的文章" name="articles">
-          <el-table :data="articles" v-loading="loading">
-            <el-table-column prop="title" label="标题" />
-            <el-table-column prop="status" label="状态" width="100">
+          <div class="tab-toolbar">
+            <el-radio-group v-model="articleStatus" @change="loadArticlesFiltered" size="small">
+              <el-radio-button :value="null">全部</el-radio-button>
+              <el-radio-button :value="1">已发布</el-radio-button>
+              <el-radio-button :value="0">草稿</el-radio-button>
+              <el-radio-button :value="2">私密</el-radio-button>
+              <el-radio-button :value="3">回收站</el-radio-button>
+            </el-radio-group>
+            <div class="toolbar-actions">
+              <el-button size="small" type="primary" @click="$router.push('/user/article/edit')">写文章</el-button>
+              <el-button v-if="selectedArticleIds.length" size="small" @click="handleBatchUnpublish">批量下架</el-button>
+              <el-button v-if="selectedArticleIds.length" size="small" type="danger" @click="handleBatchDelete">批量删除</el-button>
+            </div>
+          </div>
+          <el-table :data="articles" v-loading="loading" @selection-change="handleArticleSelectionChange">
+            <el-table-column type="selection" width="50" />
+            <el-table-column prop="title" label="标题" min-width="200" show-overflow-tooltip />
+            <el-table-column prop="status" label="状态" width="80">
               <template #default="{ row }">
-                <el-tag :type="statusMap[row.status].type">{{ statusMap[row.status].label }}</el-tag>
+                <el-tag :type="statusMap[row.status].type" size="small">{{ statusMap[row.status].label }}</el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="createdAt" label="时间" width="180">
+            <el-table-column prop="viewCount" label="阅读" width="70" />
+            <el-table-column prop="likeCount" label="点赞" width="70" />
+            <el-table-column prop="createdAt" label="时间" width="120">
               <template #default="{ row }">{{ formatDate(row.createdAt) }}</template>
             </el-table-column>
             <el-table-column label="操作" width="150">
@@ -35,6 +81,15 @@
               </template>
             </el-table-column>
           </el-table>
+          <div class="pagination" v-if="articleTotal > articlePageSize">
+            <el-pagination
+              :current-page="articlePage"
+              :page-size="articlePageSize"
+              :total="articleTotal"
+              layout="prev, pager, next"
+              @current-change="handleArticlePageChange"
+            />
+          </div>
         </el-tab-pane>
 
         <!-- 我的帖子 -->
@@ -60,7 +115,7 @@
           <el-table :data="likedArticles" v-loading="loading">
             <el-table-column prop="title" label="标题">
               <template #default="{ row }">
-                <span class="clickable" @click="$router.push(`/article/${row.targetId}`)">{{ row.title }}</span>
+                <span class="clickable" @click="goToContent(row)">{{ row.title }}</span>
               </template>
             </el-table-column>
             <el-table-column prop="contentType" label="类型" width="100">
@@ -80,7 +135,7 @@
           <el-table :data="collectedArticles" v-loading="loading">
             <el-table-column prop="title" label="标题">
               <template #default="{ row }">
-                <span class="clickable" @click="$router.push(`/article/${row.targetId}`)">{{ row.title }}</span>
+                <span class="clickable" @click="goToContent(row)">{{ row.title }}</span>
               </template>
             </el-table-column>
             <el-table-column prop="contentType" label="类型" width="100">
@@ -113,8 +168,17 @@
             <el-form-item label="昵称">
               <el-input v-model="profileForm.nickname" />
             </el-form-item>
-            <el-form-item label="头像URL">
-              <el-input v-model="profileForm.avatar" />
+            <el-form-item label="头像">
+              <div class="avatar-upload">
+                <el-input v-model="profileForm.avatar" placeholder="头像URL" style="flex: 1;" />
+                <el-upload
+                  :show-file-list="false"
+                  :http-request="handleAvatarUpload"
+                  accept="image/*"
+                >
+                  <el-button size="small" type="primary">上传</el-button>
+                </el-upload>
+              </div>
             </el-form-item>
             <el-form-item label="个人简介">
               <el-input v-model="profileForm.bio" type="textarea" :rows="3" />
@@ -153,8 +217,12 @@
 import { ref, onMounted, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
-import { getMyArticles, getMyPosts, getMyNotifications, getUserProfile, updateUserProfile, deletePost, getMyLikedArticles, getMyCollectedArticles } from '@/api/front'
-import { deleteArticle } from '@/api/admin' // 注册用户也能删自己的
+import { 
+  getMyArticlesFiltered, getMyPosts, getMyNotifications, getUserProfile, updateUserProfile, 
+  deletePost, getMyLikedArticles, getMyCollectedArticles, getUserStatistics, uploadUserImage,
+  batchUnpublishArticles, batchDeleteMyArticles
+} from '@/api/front'
+import { deleteArticle } from '@/api/admin'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const router = useRouter()
@@ -167,6 +235,15 @@ const posts = ref([])
 const likedArticles = ref([])
 const collectedArticles = ref([])
 const notifications = ref([])
+const statistics = ref(null)
+
+// 文章筛选和分页
+const articleStatus = ref(null)
+const articlePage = ref(1)
+const articlePageSize = ref(10)
+const articleTotal = ref(0)
+const selectedArticleIds = ref([])
+
 const profileForm = reactive({
   nickname: '',
   avatar: '',
@@ -185,24 +262,39 @@ const statusMap = {
   3: { label: '回收站', type: 'danger' }
 }
 
+const loadArticlesFiltered = async () => {
+  loading.value = true
+  try {
+    const params = { page: articlePage.value, size: articlePageSize.value }
+    if (articleStatus.value !== null) params.status = articleStatus.value
+    const res = await getMyArticlesFiltered(params)
+    articles.value = res.data?.list || []
+    articleTotal.value = res.data?.total || 0
+  } finally {
+    loading.value = false
+  }
+}
+
 const loadData = async () => {
   loading.value = true
   try {
-    const [artRes, postRes, likedRes, collectedRes, noticeRes, profileRes] = await Promise.allSettled([
-      getMyArticles({ page: 1, size: 50 }),
+    const [postRes, likedRes, collectedRes, noticeRes, profileRes, statsRes] = await Promise.allSettled([
       getMyPosts({ page: 1, size: 50 }),
       getMyLikedArticles({ page: 1, size: 50 }),
       getMyCollectedArticles({ page: 1, size: 50 }),
       getMyNotifications({ page: 1, size: 50 }),
-      getUserProfile()
+      getUserProfile(),
+      getUserStatistics()
     ])
     
-    // 安全地获取数据，即使某个接口失败也不影响其他数据
-    articles.value = artRes.status === 'fulfilled' && artRes.value?.data?.list ? artRes.value.data.list : []
     posts.value = postRes.status === 'fulfilled' && postRes.value?.data?.list ? postRes.value.data.list : []
     likedArticles.value = likedRes.status === 'fulfilled' && likedRes.value?.data?.list ? likedRes.value.data.list : []
     collectedArticles.value = collectedRes.status === 'fulfilled' && collectedRes.value?.data?.list ? collectedRes.value.data.list : []
     notifications.value = noticeRes.status === 'fulfilled' && noticeRes.value?.data?.list ? noticeRes.value.data.list : []
+    
+    if (statsRes.status === 'fulfilled' && statsRes.value?.data) {
+      statistics.value = statsRes.value.data
+    }
     
     if (profileRes.status === 'fulfilled' && profileRes.value?.data) {
       const data = profileRes.value.data
@@ -213,15 +305,57 @@ const loadData = async () => {
         github: data.github,
         zhihu: data.zhihu,
         weixin: data.weixin,
-        likesPublic: data.likesPublic !== false, // 默认true
-        favoritesPublic: data.favoritesPublic !== false // 默认true
+        likesPublic: data.likesPublic !== false,
+        favoritesPublic: data.favoritesPublic !== false
       })
     }
   } catch (e) {
     console.error('加载用户中心数据失败:', e)
-    ElMessage.error('加载数据失败，请稍后重试')
   } finally {
     loading.value = false
+  }
+}
+
+const handleArticleSelectionChange = (selection) => {
+  selectedArticleIds.value = selection.map(item => item.id)
+}
+
+const handleArticlePageChange = (page) => {
+  articlePage.value = page
+  loadArticlesFiltered()
+}
+
+const handleBatchUnpublish = async () => {
+  await ElMessageBox.confirm(`确定要下架选中的 ${selectedArticleIds.value.length} 篇文章吗？`, '提示')
+  await batchUnpublishArticles(selectedArticleIds.value)
+  ElMessage.success('已下架')
+  loadArticlesFiltered()
+  loadData()
+}
+
+const handleBatchDelete = async () => {
+  await ElMessageBox.confirm(`确定要删除选中的 ${selectedArticleIds.value.length} 篇文章吗？`, '提示')
+  await batchDeleteMyArticles(selectedArticleIds.value)
+  ElMessage.success('已移到回收站')
+  loadArticlesFiltered()
+  loadData()
+}
+
+const handleAvatarUpload = async ({ file }) => {
+  try {
+    const res = await uploadUserImage(file)
+    profileForm.avatar = res.data.fileUrl
+    ElMessage.success('上传成功')
+  } catch (e) {
+    ElMessage.error('上传失败')
+  }
+}
+
+const goToContent = (row) => {
+  if (row.contentType === 'ARTICLE') {
+    router.push(`/article/${row.targetId}`)
+  } else {
+    router.push(`/forum/post/${row.targetId}`)
   }
 }
 
@@ -237,6 +371,7 @@ const handleDeleteArticle = (id) => {
   ElMessageBox.confirm('确定要删除这篇文章吗？', '提示').then(async () => {
     await deleteArticle(id)
     ElMessage.success('已删除')
+    loadArticlesFiltered()
     loadData()
   })
 }
@@ -252,12 +387,10 @@ const handleDeletePost = (id) => {
 const updateProfile = async () => {
   try {
     await updateUserProfile(profileForm)
-    // 更新store中的信息
     userStore.userInfo.nickname = profileForm.nickname
     userStore.userInfo.avatar = profileForm.avatar
     ElMessage.success('资料已更新')
   } catch (e) {
-    // 检查是否是后端返回的错误信息
     const msg = e.response?.data?.message || '更新失败，请重试'
     ElMessage.error(msg)
     console.error(e)
@@ -265,10 +398,13 @@ const updateProfile = async () => {
 }
 
 const formatDate = (date) => {
-  return new Date(date).toLocaleString()
+  return new Date(date).toLocaleDateString('zh-CN')
 }
 
-onMounted(loadData)
+onMounted(() => {
+  loadArticlesFiltered()
+  loadData()
+})
 </script>
 
 <style scoped>
@@ -295,8 +431,60 @@ onMounted(loadData)
   word-break: break-word;
 }
 
+/* 统计卡片 */
+.stats-cards {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.stat-card {
+  text-align: center;
+  padding: 10px;
+}
+
+.stat-card .stat-value {
+  font-size: 28px;
+  font-weight: bold;
+  color: #409eff;
+}
+
+.stat-card .stat-label {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 5px;
+}
+
 .center-content {
   margin-top: 20px;
+}
+
+/* 工具栏 */
+.tab-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.toolbar-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.pagination {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 15px;
+}
+
+.avatar-upload {
+  display: flex;
+  gap: 10px;
+  align-items: center;
 }
 
 .clickable {
@@ -348,6 +536,13 @@ onMounted(loadData)
   line-height: 1.6;
 }
 
+/* 响应式 */
+@media (max-width: 768px) {
+  .stats-cards {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
 /* 夜间模式样式 */
 :deep(.dark) .user-center,
 .dark .user-center {
@@ -358,50 +553,5 @@ onMounted(loadData)
   --border-color: #2a3f5f;
   --link-color: #66b1ff;
   --unread-bg: #2a3f5f;
-}
-
-/* 让 el-card 和 el-tabs 适配夜间模式 */
-:deep(.dark) .user-center .el-card {
-  background-color: #16213e;
-  border-color: #2a3f5f;
-}
-
-:deep(.dark) .user-center .el-tabs {
-  background-color: #16213e;
-}
-
-:deep(.dark) .user-center .el-tabs__header {
-  background-color: #16213e;
-  border-color: #2a3f5f;
-}
-
-:deep(.dark) .user-center .el-tabs__item {
-  color: #a0a0a0;
-}
-
-:deep(.dark) .user-center .el-tabs__item.is-active {
-  color: #66b1ff;
-}
-
-:deep(.dark) .user-center .el-table {
-  background-color: #16213e;
-  color: #e0e0e0;
-}
-
-:deep(.dark) .user-center .el-table th {
-  background-color: #1a2942;
-  color: #e0e0e0;
-}
-
-:deep(.dark) .user-center .el-table tr {
-  background-color: #16213e;
-}
-
-:deep(.dark) .user-center .el-table td {
-  border-color: #2a3f5f;
-}
-
-:deep(.dark) .user-center .el-table__body tr:hover > td {
-  background-color: #1a2942 !important;
 }
 </style>

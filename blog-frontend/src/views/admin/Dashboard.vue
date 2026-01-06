@@ -48,7 +48,7 @@
         <div class="stat-card">
           <div class="stat-icon" style="background: #67c23a;"><el-icon><View /></el-icon></div>
           <div class="stat-info">
-            <p class="stat-value">{{ stats.totalViews }}</p>
+            <p class="stat-value">{{ stats.totalViews || 0 }}</p>
             <p class="stat-label">总阅读量</p>
           </div>
         </div>
@@ -57,8 +57,17 @@
         <div class="stat-card">
           <div class="stat-icon" style="background: #e6a23c;"><el-icon><Star /></el-icon></div>
           <div class="stat-info">
-            <p class="stat-value">{{ stats.totalLikes }}</p>
+            <p class="stat-value">{{ stats.totalLikes || 0 }}</p>
             <p class="stat-label">总点赞数</p>
+          </div>
+        </div>
+      </el-col>
+      <el-col :xs="12" :sm="6">
+        <div class="stat-card">
+          <div class="stat-icon" style="background: #f56c6c;"><el-icon><StarFilled /></el-icon></div>
+          <div class="stat-info">
+            <p class="stat-value">{{ stats.totalCollects || 0 }}</p>
+            <p class="stat-label">总收藏数</p>
           </div>
         </div>
       </el-col>
@@ -66,8 +75,61 @@
         <div class="stat-card">
           <div class="stat-icon" style="background: #909399;"><el-icon><Message /></el-icon></div>
           <div class="stat-info">
-            <p class="stat-value">{{ stats.pendingComments }}</p>
+            <p class="stat-value">{{ stats.pendingComments || 0 }}</p>
             <p class="stat-label">待审评论</p>
+          </div>
+        </div>
+      </el-col>
+    </el-row>
+
+    <!-- 第三行：今日新增 -->
+    <el-row :gutter="20" style="margin-top: 20px;">
+      <el-col :xs="12" :sm="6">
+        <div class="stat-card today-stat">
+          <div class="stat-icon" style="background: #409eff;"><el-icon><UserFilled /></el-icon></div>
+          <div class="stat-info">
+            <p class="stat-value">{{ stats.todayNewUsers || 0 }}</p>
+            <p class="stat-label">今日新增用户</p>
+          </div>
+        </div>
+      </el-col>
+      <el-col :xs="12" :sm="6">
+        <div class="stat-card today-stat">
+          <div class="stat-icon" style="background: #67c23a;"><el-icon><DocumentCopy /></el-icon></div>
+          <div class="stat-info">
+            <p class="stat-value">{{ stats.todayNewArticles || 0 }}</p>
+            <p class="stat-label">今日新增文章</p>
+          </div>
+        </div>
+      </el-col>
+      <el-col :xs="12" :sm="6">
+        <div class="stat-card today-stat">
+          <div class="stat-icon" style="background: #e6a23c;"><el-icon><ChatLineSquare /></el-icon></div>
+          <div class="stat-info">
+            <p class="stat-value">{{ stats.todayNewPosts || 0 }}</p>
+            <p class="stat-label">今日新增帖子</p>
+          </div>
+        </div>
+      </el-col>
+      <el-col :xs="12" :sm="6">
+        <div class="stat-card today-stat">
+          <div class="stat-icon" style="background: #f56c6c;"><el-icon><ChatDotRound /></el-icon></div>
+          <div class="stat-info">
+            <p class="stat-value">{{ stats.todayNewComments || 0 }}</p>
+            <p class="stat-label">今日新增评论</p>
+          </div>
+        </div>
+      </el-col>
+    </el-row>
+
+    <!-- 第四行：活跃用户 -->
+    <el-row :gutter="20" style="margin-top: 20px;">
+      <el-col :xs="12" :sm="6">
+        <div class="stat-card">
+          <div class="stat-icon" style="background: #36cfc9;"><el-icon><UserFilled /></el-icon></div>
+          <div class="stat-info">
+            <p class="stat-value">{{ stats.activeUsers || 0 }}</p>
+            <p class="stat-label">活跃用户（近7天）</p>
           </div>
         </div>
       </el-col>
@@ -75,7 +137,7 @@
         <div class="stat-card">
           <div class="stat-icon" style="background: #909399;"><el-icon><EditPen /></el-icon></div>
           <div class="stat-info">
-            <p class="stat-value">{{ stats.draftArticles }}</p>
+            <p class="stat-value">{{ stats.draftArticles || 0 }}</p>
             <p class="stat-label">草稿箱</p>
           </div>
         </div>
@@ -106,6 +168,23 @@
       </el-col>
     </el-row>
 
+    <!-- 数据趋势图表 -->
+    <el-card header="数据趋势" style="margin-top: 20px;">
+      <div class="chart-controls" style="margin-bottom: 20px;">
+        <el-radio-group v-model="chartPeriod" size="small">
+          <el-radio-button label="day">按日</el-radio-button>
+          <el-radio-button label="week">按周</el-radio-button>
+          <el-radio-button label="month">按月</el-radio-button>
+        </el-radio-group>
+      </div>
+      <div class="chart-placeholder">
+        <el-empty description="图表功能开发中，将展示用户增长、内容增长、互动趋势等数据" />
+        <div style="margin-top: 20px; color: #909399; font-size: 14px;">
+          <p>提示：后续可集成 ECharts 等图表库实现可视化展示</p>
+        </div>
+      </div>
+    </el-card>
+
     <el-card header="热门文章 TOP10" style="margin-top: 20px;">
       <el-table :data="hotArticles" stripe>
         <el-table-column type="index" width="50" />
@@ -121,12 +200,13 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { getStatistics, getHotArticles, exportArticlesMd, exportArticlesHtml, exportAllData } from '@/api/admin'
-import { Document, View, Star, ChatDotRound, Plus, ChatLineSquare, User, Message, EditPen } from '@element-plus/icons-vue'
+import { Document, View, Star, ChatDotRound, Plus, ChatLineSquare, User, Message, EditPen, StarFilled, UserFilled, DocumentCopy } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 
 const userStore = useUserStore()
 const stats = ref({})
 const hotArticles = ref([])
+const chartPeriod = ref('day')
 
 const downloadBackup = (type) => {
   let url
@@ -194,6 +274,11 @@ onMounted(async () => {
   color: #999;
   margin: 5px 0 0;
   font-size: 14px;
+}
+
+.today-stat {
+  border: 2px solid #409eff;
+  background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 100%);
 }
 
 .quick-actions, .backup-actions {

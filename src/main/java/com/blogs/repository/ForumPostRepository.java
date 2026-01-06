@@ -41,4 +41,10 @@ public interface ForumPostRepository extends JpaRepository<ForumPost, Long> {
 
     @Query("SELECT SUM(p.likeCount) FROM ForumPost p")
     Long sumLikeCount();
+
+    /**
+     * 统计指定时间之后创建的帖子数
+     */
+    @Query("SELECT COUNT(p) FROM ForumPost p WHERE p.createdAt >= :dateTime")
+    long countByCreatedAtAfter(java.time.LocalDateTime dateTime);
 }

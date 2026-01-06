@@ -19,6 +19,12 @@ public class AdminCommentController {
     @Autowired
     private CommentService commentService;
 
+    @Autowired
+    private com.blogs.service.NotificationService notificationService;
+
+    @Autowired
+    private com.blogs.service.UserService userService;
+
     /**
      * 获取评论列表
      * 
@@ -85,5 +91,69 @@ public class AdminCommentController {
     public Result<Void> batchDelete(@RequestBody List<Long> ids) {
         commentService.batchDelete(ids);
         return Result.success();
+    }
+
+    /**
+     * 警告用户（发送系统消息）
+     */
+    @PostMapping("/{id}/warn")
+    public Result<Void> warnUser(@PathVariable Long id, @RequestBody WarnRequest request) {
+        com.blogs.entity.Comment comment = commentService.getCommentById(id)
+                .orElseThrow(() -> new RuntimeException("评论不存在"));
+        
+        if (comment.getUser() != null && comment.getUser().getId() != null) {
+            notificationService.sendNotification(
+                comment.getUser().getId(),
+                null, // 系统发送
+                com.blogs.common.NotificationTypes.SYSTEM_WARNING,
+                "内容违规警告",
+                request.getMessage() != null ? request.getMessage() : "您发布的评论存在违规行为，请遵守社区规范。",
+                comment.getId(),
+                "COMMENT"
+            );
+        }
+        
+        return Result.success();
+    }
+
+    /**
+     * 禁用用户账号
+     */
+    @PostMapping("/{id}/disable-user")
+    public Result<Void> disableUser(@PathVariable Long id) {
+        com.blogs.entity.Comment comment = commentService.getCommentById(id)
+                .orElseThrow(() -> new RuntimeException("评论不存在"));
+        
+        if (comment.getUser() != null && comment.getUser().getId() != null) {
+            userService.updateUserStatus(comment.getUser().getId(), 0); // 0=禁用
+            
+            // 发送通知
+            notificationService.sendNotification(
+                comment.getUser().getId(),
+                null,
+                com.blogs.common.NotificationTypes.SYSTEM_NOTICE,
+                "账号已被禁用",
+                "由于发布违规内容，您的账号已被管理员禁用。如有疑问，请联系管理员。",
+                null,
+                null
+            );
+        }
+        
+        return Result.success();
+    }
+
+    /**
+     * 警告请求DTO
+     */
+    public static class WarnRequest {
+        private String message;
+
+        public String getMessage() {
+            return message;
+        }
+
+        public void setMessage(String message) {
+            this.message = message;
+        }
     }
 }

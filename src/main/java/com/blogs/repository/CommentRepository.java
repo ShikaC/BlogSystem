@@ -94,6 +94,12 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
 
   long countByTargetType(String targetType);
 
+  /**
+   * 统计指定时间之后创建的评论数
+   */
+  @Query("SELECT COUNT(c) FROM Comment c WHERE c.createdAt >= :dateTime")
+  long countByCreatedAtAfter(java.time.LocalDateTime dateTime);
+
   // 批量删除
   @Modifying
   @Query("""

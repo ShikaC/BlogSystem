@@ -98,4 +98,10 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
         @Modifying
         @Query("UPDATE Article a SET a.commentCount = a.commentCount + :delta WHERE a.id = :id")
         void updateCommentCount(Long id, int delta);
+
+        /**
+         * 统计指定时间之后创建的文章数
+         */
+        @Query("SELECT COUNT(a) FROM Article a WHERE a.createdAt >= :dateTime")
+        long countByCreatedAtAfter(java.time.LocalDateTime dateTime);
 }

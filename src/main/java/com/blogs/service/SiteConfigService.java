@@ -87,6 +87,7 @@ public class SiteConfigService {
         setConfigIfAbsent("site_favicon", "", "网站图标");
         setConfigIfAbsent("site_footer", "© 2025 我的博客. All rights reserved.", "页脚版权信息");
         setConfigIfAbsent("site_icp", "", "备案信息");
+        setConfigIfAbsent("site_announcement", "", "网站公告（首页展示）");
         setConfigIfAbsent("article_page_size", "10", "首页文章展示条数");
         setConfigIfAbsent("article_summary_length", "200", "文章摘要字数");
         setConfigIfAbsent("comment_enabled", "true", "是否开启评论");
@@ -95,6 +96,14 @@ public class SiteConfigService {
         setConfigIfAbsent("seo_title", "", "SEO标题");
         setConfigIfAbsent("seo_keywords", "", "SEO关键词");
         setConfigIfAbsent("seo_description", "", "SEO描述");
+        // 安全配置
+        setConfigIfAbsent("jwt_expiration", "604800000", "JWT Token有效期（毫秒），默认7天");
+        setConfigIfAbsent("password_min_length", "6", "密码最小长度");
+        setConfigIfAbsent("password_require_uppercase", "false", "密码是否要求大写字母");
+        setConfigIfAbsent("password_require_lowercase", "false", "密码是否要求小写字母");
+        setConfigIfAbsent("password_require_number", "false", "密码是否要求数字");
+        setConfigIfAbsent("password_require_special", "false", "密码是否要求特殊字符");
+        setConfigIfAbsent("sensitive_words", "", "敏感词库（每行一个，用换行符分隔）");
     }
     
     private void setConfigIfAbsent(String key, String value, String description) {

@@ -442,6 +442,13 @@ public class CommentService {
     }
 
     /**
+     * 根据ID获取评论
+     */
+    public Optional<Comment> getCommentById(Long id) {
+        return commentRepository.findById(id);
+    }
+
+    /**
      * 取消点赞评论
      */
     public void unlikeComment(Long userId, Long commentId) {

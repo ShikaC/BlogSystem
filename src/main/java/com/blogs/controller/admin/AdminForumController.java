@@ -28,6 +28,12 @@ public class AdminForumController {
     @Autowired
     private ForumPostRepository forumPostRepository;
 
+    @Autowired
+    private com.blogs.service.NotificationService notificationService;
+
+    @Autowired
+    private com.blogs.service.UserService userService;
+
     // ==================== 板块管理 ====================
 
     /**
@@ -145,6 +151,70 @@ public class AdminForumController {
 
         public void setReason(String reason) {
             this.reason = reason;
+        }
+    }
+
+    /**
+     * 警告用户（发送系统消息）
+     */
+    @PostMapping("/posts/{id}/warn")
+    public Result<Void> warnUser(@PathVariable Long id, @RequestBody WarnRequest request) {
+        ForumPost post = forumPostRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("帖子不存在"));
+        
+        if (post.getUserId() != null) {
+            notificationService.sendNotification(
+                post.getUserId(),
+                null, // 系统发送
+                com.blogs.common.NotificationTypes.SYSTEM_WARNING,
+                "内容违规警告",
+                request.getMessage() != null ? request.getMessage() : "您发布的内容存在违规行为，请遵守社区规范。",
+                post.getId(),
+                "FORUM_POST"
+            );
+        }
+        
+        return Result.success();
+    }
+
+    /**
+     * 禁用用户账号
+     */
+    @PostMapping("/posts/{id}/disable-user")
+    public Result<Void> disableUser(@PathVariable Long id) {
+        ForumPost post = forumPostRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("帖子不存在"));
+        
+        if (post.getUserId() != null) {
+            userService.updateUserStatus(post.getUserId(), 0); // 0=禁用
+            
+            // 发送通知
+            notificationService.sendNotification(
+                post.getUserId(),
+                null,
+                com.blogs.common.NotificationTypes.SYSTEM_NOTICE,
+                "账号已被禁用",
+                "由于发布违规内容，您的账号已被管理员禁用。如有疑问，请联系管理员。",
+                null,
+                null
+            );
+        }
+        
+        return Result.success();
+    }
+
+    /**
+     * 警告请求DTO
+     */
+    public static class WarnRequest {
+        private String message;
+
+        public String getMessage() {
+            return message;
+        }
+
+        public void setMessage(String message) {
+            this.message = message;
         }
     }
 

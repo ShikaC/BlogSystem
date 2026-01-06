@@ -16,6 +16,10 @@ public final class NotificationTypes {
     public static final String FORUM_POST_LIKE = "FORUM_POST_LIKE";
     public static final String FORUM_POST_COMMENT = "FORUM_POST_COMMENT";
     public static final String FORUM_POST_COMMENT_REPLY = "FORUM_POST_COMMENT_REPLY";
+    
+    // 系统通知
+    public static final String SYSTEM_WARNING = "SYSTEM_WARNING";
+    public static final String SYSTEM_NOTICE = "SYSTEM_NOTICE";
 }
 
 

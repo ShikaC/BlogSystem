@@ -68,4 +68,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * 统计用户数（不同角色）
      */
     long countByRole(String role);
+
+    /**
+     * 统计指定时间之后创建的用户数
+     */
+    @Query("SELECT COUNT(u) FROM User u WHERE u.createdAt >= :dateTime")
+    long countByCreatedAtAfter(java.time.LocalDateTime dateTime);
 }

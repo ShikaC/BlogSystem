@@ -5,6 +5,11 @@ import com.blogs.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.ArrayList;
+
 /**
  * 统计服务 - 聚合全站数据
  */
@@ -28,6 +33,9 @@ public class StatisticsService {
 
     @Autowired
     private TagRepository tagRepository;
+
+    @Autowired
+    private FavoriteRepository favoriteRepository;
 
     /**
      * 获取全站可视化统计数据
@@ -57,6 +65,41 @@ public class StatisticsService {
         dto.setTotalCategories(categoryRepository.count());
         dto.setTotalTags(tagRepository.count());
 
+        // 收藏数
+        dto.setTotalCollects(favoriteRepository.count());
+
+        // 今日新增
+        LocalDateTime todayStart = LocalDateTime.of(LocalDate.now(), LocalTime.MIN);
+        dto.setTodayNewUsers(countUsersCreatedAfter(todayStart));
+        dto.setTodayNewArticles(countArticlesCreatedAfter(todayStart));
+        dto.setTodayNewPosts(countPostsCreatedAfter(todayStart));
+        dto.setTodayNewComments(countCommentsCreatedAfter(todayStart));
+
+        // 活跃用户（近7天创建的用户，简化处理）
+        LocalDateTime sevenDaysAgo = LocalDateTime.now().minusDays(7);
+        dto.setActiveUsers(countUsersCreatedAfter(sevenDaysAgo));
+
+        // 趋势数据（简化实现，返回空列表，后续可扩展）
+        dto.setUserTrend(new ArrayList<>());
+        dto.setContentTrend(new ArrayList<>());
+        dto.setInteractionTrend(new ArrayList<>());
+
         return dto;
+    }
+
+    private long countUsersCreatedAfter(LocalDateTime dateTime) {
+        return userRepository.countByCreatedAtAfter(dateTime);
+    }
+
+    private long countArticlesCreatedAfter(LocalDateTime dateTime) {
+        return articleRepository.countByCreatedAtAfter(dateTime);
+    }
+
+    private long countPostsCreatedAfter(LocalDateTime dateTime) {
+        return postRepository.countByCreatedAtAfter(dateTime);
+    }
+
+    private long countCommentsCreatedAfter(LocalDateTime dateTime) {
+        return commentRepository.countByCreatedAtAfter(dateTime);
     }
 }

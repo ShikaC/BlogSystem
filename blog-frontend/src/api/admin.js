@@ -83,7 +83,10 @@ export const saveForumSection = (data) => request.post('/admin/forum/sections', 
 export const deleteForumSection = (id) => request.delete(`/admin/forum/sections/${id}`)
 
 export const getAdminForumPosts = (params) => request.get('/admin/forum/posts', { params })
+export const getPendingForumPosts = (params) => request.get('/admin/forum/posts/pending', { params })
 export const updateForumPostStatus = (id, status) => request.post(`/admin/forum/posts/${id}/status`, null, { params: { status } })
+export const approveForumPost = (id) => request.post(`/admin/forum/posts/${id}/approve`)
+export const rejectForumPost = (id, reason) => request.post(`/admin/forum/posts/${id}/reject`, { reason })
 export const deleteForumPost = (id) => request.delete(`/admin/forum/posts/${id}`)
 export const permanentDeleteForumPost = (id) => request.delete(`/admin/forum/posts/${id}/permanent`)
 export const restoreForumPost = (id) => request.post(`/admin/forum/posts/${id}/restore`)

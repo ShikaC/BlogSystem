@@ -25,6 +25,7 @@ public class ForumPostVO {
     private Long likeCount;
     private Long collectCount;
     private Long commentCount;
+    private String rejectReason;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -46,6 +47,7 @@ public class ForumPostVO {
         vo.setLikeCount(post.getLikeCount());
         vo.setCollectCount(post.getCollectCount());
         vo.setCommentCount(post.getCommentCount());
+        vo.setRejectReason(post.getRejectReason());
         vo.setCreatedAt(post.getCreatedAt());
         vo.setUpdatedAt(post.getUpdatedAt());
         return vo;

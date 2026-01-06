@@ -86,6 +86,9 @@ public class Comment {
     @Column(name = "ip_address", length = 50)
     private String ipAddress;
     
+    @Column(name = "like_count")
+    private Long likeCount = 0L;
+    
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

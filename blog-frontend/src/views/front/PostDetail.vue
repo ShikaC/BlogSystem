@@ -56,6 +56,15 @@
             <span class="comment-user">{{ comment.nickname || '用户 ' + comment.userId }}</span>
             <span class="comment-time">{{ formatDate(comment.createdAt) }}</span>
             <el-button 
+              v-if="userStore.isLoggedIn" 
+              :type="comment.isLiked ? 'success' : 'default'"
+              link 
+              size="small" 
+              @click="handleLikeComment(comment)"
+            >
+              {{ comment.isLiked ? '已赞' : '点赞' }} ({{ comment.likeCount || 0 }})
+            </el-button>
+            <el-button 
               v-if="userStore.isLoggedIn && Number(userStore.id) === comment.userId" 
               type="danger" 
               link 
@@ -75,7 +84,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getForumPost, getForumPostComments, createPostComment, deletePostComment, likePost, unlikePost, collectPost, uncollectPost, checkPostStatus } from '@/api/front'
+import { getForumPost, getForumPostComments, createPostComment, deletePostComment, likePost, unlikePost, collectPost, uncollectPost, checkPostStatus, likeComment, unlikeComment } from '@/api/front'
 import { useUserStore } from '@/stores/user'
 import { ElMessage } from 'element-plus'
 
@@ -202,6 +211,24 @@ const handleDeleteComment = async (commentId) => {
     loadData()
   } catch (e) {
     console.error('删除评论失败:', e)
+  }
+}
+
+const handleLikeComment = async (comment) => {
+  if (!userStore.isLoggedIn) return ElMessage.warning('请先登录')
+  try {
+    if (comment.isLiked) {
+      await unlikeComment(comment.id)
+      comment.likeCount = Math.max(0, (comment.likeCount || 0) - 1)
+      comment.isLiked = false
+    } else {
+      await likeComment(comment.id)
+      comment.likeCount = (comment.likeCount || 0) + 1
+      comment.isLiked = true
+    }
+  } catch (e) {
+    console.error('点赞失败:', e)
+    ElMessage.error('操作失败')
   }
 }
 

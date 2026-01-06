@@ -26,6 +26,8 @@ public class CommentVO {
     private String replyToNickname;
     private Boolean isBlogger;
     private Integer status;
+    private Long likeCount;
+    private Boolean isLiked;  // 当前用户是否已点赞
     private LocalDateTime createdAt;
     private List<CommentVO> children;
     
@@ -47,6 +49,7 @@ public class CommentVO {
         vo.setReplyToNickname(comment.getReplyToNickname());
         vo.setIsBlogger(comment.getIsBlogger());
         vo.setStatus(comment.getStatus());
+        vo.setLikeCount(comment.getLikeCount());
         vo.setCreatedAt(comment.getCreatedAt());
         return vo;
     }

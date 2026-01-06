@@ -54,4 +54,10 @@ public class ForumPostComment {
 
     @Transient
     private String replyToNickname;
+
+    @Transient
+    private Long likeCount;
+
+    @Transient
+    private Boolean isLiked;
 }

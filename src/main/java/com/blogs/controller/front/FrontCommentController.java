@@ -22,6 +22,9 @@ public class FrontCommentController {
     @Autowired
     private CommentService commentService;
 
+    @Autowired
+    private com.blogs.service.UserService userService;
+
     // @Autowired
     // private CaptchaService captchaService;
 
@@ -55,6 +58,34 @@ public class FrontCommentController {
         }
 
         commentService.deleteUserComment(id, username);
+        return Result.success();
+    }
+
+    /**
+     * 点赞评论
+     */
+    @PostMapping("/{id}/like")
+    public Result<Void> likeComment(@PathVariable Long id) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        if ("anonymousUser".equals(username)) {
+            throw new BusinessException("请先登录");
+        }
+        com.blogs.dto.UserDTO user = userService.getUserInfo(username);
+        commentService.likeComment(user.getId(), id);
+        return Result.success();
+    }
+
+    /**
+     * 取消点赞评论
+     */
+    @DeleteMapping("/{id}/like")
+    public Result<Void> unlikeComment(@PathVariable Long id) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        if ("anonymousUser".equals(username)) {
+            throw new BusinessException("请先登录");
+        }
+        com.blogs.dto.UserDTO user = userService.getUserInfo(username);
+        commentService.unlikeComment(user.getId(), id);
         return Result.success();
     }
 

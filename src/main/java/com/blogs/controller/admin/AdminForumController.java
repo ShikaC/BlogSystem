@@ -95,6 +95,60 @@ public class AdminForumController {
     }
 
     /**
+     * 审核帖子 - 通过
+     */
+    @PostMapping("/posts/{id}/approve")
+    public Result<Void> approvePost(@PathVariable Long id) {
+        ForumPost post = forumPostRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("帖子不存在"));
+        post.setStatus(1); // 已发布
+        post.setRejectReason(null); // 清除驳回理由
+        forumPostRepository.save(post);
+        return Result.success();
+    }
+
+    /**
+     * 审核帖子 - 驳回
+     */
+    @PostMapping("/posts/{id}/reject")
+    public Result<Void> rejectPost(@PathVariable Long id, @RequestBody RejectRequest request) {
+        ForumPost post = forumPostRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("帖子不存在"));
+        post.setStatus(2); // 已驳回
+        post.setRejectReason(request.getReason());
+        forumPostRepository.save(post);
+        return Result.success();
+    }
+
+    /**
+     * 获取待审核帖子列表（按发布时间排序）
+     */
+    @GetMapping("/posts/pending")
+    public Result<PageResult<ForumPost>> getPendingPosts(
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer size) {
+        Pageable pageable = PageRequest.of(page - 1, size, 
+                org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "createdAt"));
+        Page<ForumPost> postPage = forumPostRepository.findByStatus(0, pageable);
+        return Result.success(PageResult.of(postPage.getContent(), postPage.getTotalElements(), page, size));
+    }
+
+    /**
+     * 驳回请求DTO
+     */
+    public static class RejectRequest {
+        private String reason;
+
+        public String getReason() {
+            return reason;
+        }
+
+        public void setReason(String reason) {
+            this.reason = reason;
+        }
+    }
+
+    /**
      * 删除帖子（移到回收站）
      */
     @DeleteMapping("/posts/{id}")

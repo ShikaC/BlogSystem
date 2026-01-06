@@ -41,6 +41,7 @@ const routes = [
       { path: 'article-comments', name: 'AdminArticleComments', component: () => import('@/views/admin/ArticleComments.vue') },
       // 论坛管理
       { path: 'forum-posts', name: 'AdminForumPosts', component: () => import('@/views/admin/ForumPosts.vue') },
+      { path: 'post-audit', name: 'PostAudit', component: () => import('@/views/admin/PostAudit.vue') },
       { path: 'forum-comments', name: 'AdminForumComments', component: () => import('@/views/admin/ForumComments.vue') },
       { path: 'forum-sections', name: 'AdminForumSections', component: () => import('@/views/admin/ForumSections.vue') },
       // 分类/标签

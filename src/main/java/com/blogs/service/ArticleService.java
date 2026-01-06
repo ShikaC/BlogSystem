@@ -89,7 +89,16 @@ public class ArticleService {
         article.setSummary(request.getSummary());
         article.setCoverImage(request.getCoverImage());
         article.setStatus(request.getStatus());
-        article.setIsTop(request.getIsTop());
+        // 只有管理员才能设置置顶
+        if ("ADMIN".equals(user.getRole())) {
+            article.setIsTop(request.getIsTop());
+        } else {
+            // 普通用户不能设置置顶，保持原有值或设为false
+            if (isNew) {
+                article.setIsTop(false);
+            }
+            // 编辑时保持原有值不变
+        }
         article.setSeoTitle(request.getSeoTitle());
         article.setSeoKeywords(request.getSeoKeywords());
         article.setSeoDescription(request.getSeoDescription());

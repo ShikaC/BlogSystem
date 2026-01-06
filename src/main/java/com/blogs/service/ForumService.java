@@ -82,12 +82,31 @@ public class ForumService {
             throw new BusinessException("发布者ID不能为空");
         }
         if (post.getId() != null) {
+            // 编辑现有帖子
             Long postId = Objects.requireNonNull(post.getId(), "帖子ID不能为空");
             ForumPost oldPost = postRepository.findById(postId)
                     .orElseThrow(() -> new BusinessException("帖子不存在"));
             if (!oldPost.getUserId().equals(post.getUserId())) {
                 throw new BusinessException("无权修改他人帖子");
             }
+            
+            // 权限控制：审核通过后只能编辑正文，标题不可修改
+            if (oldPost.getStatus() != null && oldPost.getStatus() == 1) {
+                // 审核通过后，保持原标题，只更新内容
+                post.setTitle(oldPost.getTitle());
+                // 编辑后需要重新审核
+                post.setStatus(0);
+                post.setRejectReason(null);
+            } else {
+                // 审核通过前可以自由编辑
+                // 如果是驳回状态，清除驳回理由
+                if (oldPost.getStatus() != null && oldPost.getStatus() == 2) {
+                    post.setRejectReason(null);
+                }
+            }
+        } else {
+            // 新帖子，状态设为待审核（0）
+            post.setStatus(0);
         }
         return postRepository.save(post);
     }
@@ -233,6 +252,7 @@ public class ForumService {
             fc.setStatus(c.getStatus());
             fc.setIpAddress(c.getIpAddress());
             fc.setCreatedAt(c.getCreatedAt());
+            fc.setLikeCount(c.getLikeCount());
 
             // 填充用户信息
             fc.setNickname(c.getNickname());

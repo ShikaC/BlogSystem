@@ -19,9 +19,15 @@ public class ForumPost extends BaseContent {
     @Column(name = "is_essence")
     private Boolean isEssence = false;
 
+    /**
+     * 驳回理由（审核不通过时填写）
+     */
+    @Column(name = "reject_reason", length = 500)
+    private String rejectReason;
+
     public ForumPost() {
-        // 兼容原有默认值：论坛帖子默认已发布
-        this.setStatus(1);
+        // 新帖子默认状态为待审核（0）
+        this.setStatus(0);
     }
 }
 

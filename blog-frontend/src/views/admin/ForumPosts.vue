@@ -13,8 +13,9 @@
         </el-select>
         <el-radio-group v-model="status" @change="loadPosts">
           <el-radio-button :value="null">全部</el-radio-button>
-          <el-radio-button :value="1">正常</el-radio-button>
+          <el-radio-button :value="1">已发布</el-radio-button>
           <el-radio-button :value="0">待审核</el-radio-button>
+          <el-radio-button :value="2">已驳回</el-radio-button>
           <el-radio-button :value="3">回收站</el-radio-button>
         </el-radio-group>
       </div>
@@ -44,12 +45,27 @@
         <el-table-column label="发布时间" width="120">
           <template #default="{ row }">{{ formatDate(row.createdAt) }}</template>
         </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column label="操作" width="280" fixed="right">
           <template #default="{ row }">
-            <el-button v-if="row.status !== 3" size="small" type="danger" @click="handleDelete(row)">删除</el-button>
-            <template v-else>
+            <!-- 待审核状态：显示审核按钮 -->
+            <template v-if="row.status === 0">
+              <el-button size="small" type="success" @click="handleApprove(row)">通过</el-button>
+              <el-button size="small" type="warning" @click="handleReject(row)">驳回</el-button>
+              <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
+            </template>
+            <!-- 已驳回状态：显示审核按钮 -->
+            <template v-else-if="row.status === 2">
+              <el-button size="small" type="success" @click="handleApprove(row)">通过</el-button>
+              <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
+            </template>
+            <!-- 回收站状态 -->
+            <template v-else-if="row.status === 3">
               <el-button size="small" @click="handleRestore(row)">恢复</el-button>
               <el-button size="small" type="danger" @click="handlePermanentDelete(row)">彻底删除</el-button>
+            </template>
+            <!-- 其他状态：只显示删除 -->
+            <template v-else>
+              <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
             </template>
           </template>
         </el-table-column>
@@ -68,12 +84,30 @@
         />
       </div>
     </el-card>
+
+    <!-- 驳回对话框 -->
+    <el-dialog v-model="rejectDialogVisible" title="驳回帖子" width="500px">
+      <el-form :model="rejectForm" label-width="100px">
+        <el-form-item label="驳回理由" required>
+          <el-input
+            v-model="rejectForm.reason"
+            type="textarea"
+            :rows="4"
+            placeholder="请输入驳回理由"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="rejectDialogVisible = false">取消</el-button>
+        <el-button type="danger" @click="confirmReject">确定驳回</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { getAdminForumPosts, getAdminForumSections, deleteForumPost, restoreForumPost, permanentDeleteForumPost, batchDeleteForumPosts, fixForumPostCounts } from '@/api/admin'
+import { ref, reactive, onMounted } from 'vue'
+import { getAdminForumPosts, getAdminForumSections, deleteForumPost, restoreForumPost, permanentDeleteForumPost, batchDeleteForumPosts, fixForumPostCounts, approveForumPost, rejectForumPost } from '@/api/admin'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const posts = ref([])
@@ -88,8 +122,9 @@ const selectedIds = ref([])
 
 const statusMap = {
   0: { text: '待审核', type: 'info' },
-  1: { text: '正常', type: 'success' },
-  3: { text: '回收站', type: 'danger' }
+  1: { text: '已发布', type: 'success' },
+  2: { text: '已驳回', type: 'danger' },
+  3: { text: '回收站', type: 'warning' }
 }
 
 const formatDate = (dateStr) => new Date(dateStr).toLocaleDateString('zh-CN')
@@ -168,6 +203,55 @@ const handleFixCounts = async () => {
     if (e !== 'cancel') {
       ElMessage.error('校正失败')
     }
+  }
+}
+
+const rejectForm = reactive({
+  postId: null,
+  reason: ''
+})
+
+const rejectDialogVisible = ref(false)
+
+const handleApprove = async (row) => {
+  try {
+    await ElMessageBox.confirm('确定要通过这个帖子吗？', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    
+    await approveForumPost(row.id)
+    ElMessage.success('审核通过')
+    loadPosts()
+  } catch (e) {
+    if (e !== 'cancel') {
+      console.error('审核失败:', e)
+      ElMessage.error('审核失败')
+    }
+  }
+}
+
+const handleReject = (row) => {
+  rejectForm.postId = row.id
+  rejectForm.reason = ''
+  rejectDialogVisible.value = true
+}
+
+const confirmReject = async () => {
+  if (!rejectForm.reason.trim()) {
+    ElMessage.warning('请输入驳回理由')
+    return
+  }
+  
+  try {
+    await rejectForumPost(rejectForm.postId, rejectForm.reason)
+    ElMessage.success('已驳回')
+    rejectDialogVisible.value = false
+    loadPosts()
+  } catch (e) {
+    console.error('驳回失败:', e)
+    ElMessage.error('驳回失败')
   }
 }
 

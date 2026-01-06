@@ -25,7 +25,7 @@ public class LikeRecord {
     private Long targetId;
     
     /**
-     * 类型: ARTICLE, POST
+     * 类型: ARTICLE, POST, COMMENT
      */
     @Column(nullable = false, length = 20)
     private String type;

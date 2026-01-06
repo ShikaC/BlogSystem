@@ -31,6 +31,8 @@ export const uncollectArticle = (id) => request.delete(`/front/articles/${id}/co
 // 评论功能
 export const createComment = (data) => request.post('/front/comments', data)
 export const deleteComment = (id) => request.delete(`/front/comments/${id}`)
+export const likeComment = (id) => request.post(`/front/comments/${id}/like`)
+export const unlikeComment = (id) => request.delete(`/front/comments/${id}/like`)
 
 // 用户相关
 export const getMyArticles = (params) => request.get('/front/user/articles', { params })

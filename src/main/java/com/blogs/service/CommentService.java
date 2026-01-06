@@ -43,6 +43,9 @@ public class CommentService {
     @Autowired
     private NotificationService notificationService;
 
+    @Autowired
+    private com.blogs.repository.LikeRecordRepository likeRecordRepository;
+
     /**
      * 发表评论 (需要登录)
      */
@@ -411,5 +414,47 @@ public class CommentService {
             return comment.getTargetId();
         }
         return comment.getLegacyArticleId();
+    }
+
+    /**
+     * 点赞评论
+     */
+    public void likeComment(Long userId, Long commentId) {
+        if (userId == null) {
+            throw new BusinessException("用户ID不能为空");
+        }
+        if (commentId == null) {
+            throw new BusinessException("评论ID不能为空");
+        }
+        if (likeRecordRepository.findByUserIdAndTargetIdAndType(userId, commentId, "COMMENT").isPresent()) {
+            throw new BusinessException("您已点赞过该评论");
+        }
+        com.blogs.entity.LikeRecord record = new com.blogs.entity.LikeRecord();
+        record.setUserId(userId);
+        record.setTargetId(commentId);
+        record.setType("COMMENT");
+        likeRecordRepository.save(record);
+
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new BusinessException("评论不存在"));
+        comment.setLikeCount(comment.getLikeCount() + 1);
+        commentRepository.save(comment);
+    }
+
+    /**
+     * 取消点赞评论
+     */
+    public void unlikeComment(Long userId, Long commentId) {
+        if (userId == null || commentId == null)
+            return;
+
+        likeRecordRepository.findByUserIdAndTargetIdAndType(userId, commentId, "COMMENT")
+                .ifPresent(record -> {
+                    likeRecordRepository.delete(record);
+                    commentRepository.findById(commentId).ifPresent(comment -> {
+                        comment.setLikeCount(Math.max(0, comment.getLikeCount() - 1));
+                        commentRepository.save(comment);
+                    });
+                });
     }
 }

@@ -61,7 +61,7 @@
               </el-radio-group>
             </el-form-item>
 
-            <el-form-item label="置顶">
+            <el-form-item v-if="userStore.isAdmin" label="置顶">
               <el-switch v-model="form.isTop" />
             </el-form-item>
 
@@ -97,6 +97,7 @@
 
             <div class="publish-actions">
               <el-button @click="saveDraft" :loading="saving">保存草稿</el-button>
+              <el-button @click="saveWithCurrentStatus" :loading="saving">保存</el-button>
               <el-button type="primary" @click="publishArticle" :loading="saving">
                 {{ isEdit ? '更新文章' : '发布文章' }}
               </el-button>
@@ -174,13 +175,25 @@ const rules = {
 }
 
 const saveDraft = async () => {
-  form.status = 0
+  // 如果当前状态是私密(2)，保持私密状态；否则设为草稿(0)
+  if (form.status !== 2) {
+    form.status = 0
+  }
+  await doSave()
+}
+
+const saveWithCurrentStatus = async () => {
+  // 保存当前选择的状态（不强制覆盖）
+  await formRef.value.validate()
   await doSave()
 }
 
 const publishArticle = async () => {
   await formRef.value.validate()
-  form.status = 1
+  // 如果当前状态是私密(2)，保持私密状态；否则设为发布(1)
+  if (form.status !== 2) {
+    form.status = 1
+  }
   await doSave()
 }
 

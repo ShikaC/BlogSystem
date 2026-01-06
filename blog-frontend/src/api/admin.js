@@ -37,6 +37,9 @@ export const deleteFriendLink = (id) => request.delete(`/admin/friend-links/${id
 
 // 用户管理
 export const getAllUsers = () => request.get('/admin/users')
+export const getUserList = (params) => request.get('/admin/users/list', { params })
+export const getUserDetail = (id) => request.get(`/admin/users/${id}/detail`)
+export const getUserStatistics = () => request.get('/admin/users/statistics')
 export const updateUserStatus = (id, status) => request.put(`/admin/users/${id}/status`, null, { params: { status } })
 export const getCurrentAdmin = () => request.get('/admin/users/current')
 export const updateAdminProfile = (data) => request.put('/admin/users/profile', data)

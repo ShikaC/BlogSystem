@@ -87,6 +87,8 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
   // 统计
   long countByStatus(Integer status);
 
+  long countByUserId(Long userId);
+
   @Query("SELECT COUNT(c) FROM Comment c")
   long countAll();
 

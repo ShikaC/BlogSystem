@@ -50,6 +50,8 @@ const routes = [
       { path: 'comments', redirect: 'article-comments' },  // 兼容旧路由
       { path: 'media', name: 'AdminMedia', component: () => import('@/views/admin/Media.vue') },
       { path: 'friend-links', name: 'AdminFriendLinks', component: () => import('@/views/admin/FriendLinks.vue') },
+      // 用户管理
+      { path: 'users', name: 'AdminUsers', component: () => import('@/views/admin/Users.vue') },
       { path: 'settings', name: 'AdminSettings', component: () => import('@/views/admin/Settings.vue') },
       { path: 'profile', name: 'AdminProfile', component: () => import('@/views/admin/Profile.vue') }
     ]

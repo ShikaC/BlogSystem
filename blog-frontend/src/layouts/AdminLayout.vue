@@ -69,6 +69,10 @@
           <el-icon><Link /></el-icon>
           <template #title>友情链接</template>
         </el-menu-item>
+        <el-menu-item index="/admin/users">
+          <el-icon><User /></el-icon>
+          <template #title>用户管理</template>
+        </el-menu-item>
         <el-menu-item index="/admin/settings">
           <el-icon><Setting /></el-icon>
           <template #title>系统设置</template>
@@ -114,7 +118,7 @@ import { useUserStore } from '@/stores/user'
 import { ElMessageBox } from 'element-plus'
 import {
   DataAnalysis, Document, Folder, PriceTag, ChatDotRound,
-  Picture, Link, Setting, Expand, Fold, ChatLineSquare, Postcard, Grid
+  Picture, Link, Setting, Expand, Fold, ChatLineSquare, Postcard, Grid, User
 } from '@element-plus/icons-vue'
 
 const router = useRouter()

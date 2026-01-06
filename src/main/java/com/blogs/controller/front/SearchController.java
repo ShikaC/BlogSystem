@@ -10,6 +10,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.blogs.common.PageResult;
+import com.blogs.common.Result;
+import com.blogs.dto.SearchResultVO;
+import com.blogs.service.SearchService;
+
 /**
  * 全站统一搜索控制器
  */
@@ -36,6 +41,18 @@ public class SearchController {
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "10") Integer size) {
         return Result.success(searchService.search(keyword, contentType, sortBy, page, size));
+    }
+    
+    /**
+     * 获取热门搜索词
+     * @param limit 返回数量（默认10）
+     * @param days 统计时间范围（天数，默认7天，0表示全部）
+     */
+    @GetMapping("/hot-keywords")
+    public Result<List<String>> getHotKeywords(
+            @RequestParam(defaultValue = "10") Integer limit,
+            @RequestParam(required = false) Integer days) {
+        return Result.success(searchService.getHotKeywords(limit, days));
     }
 }
 

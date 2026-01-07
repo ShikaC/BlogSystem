@@ -27,6 +27,7 @@ export const likeArticle = (id) => request.post(`/front/articles/${id}/like`)
 export const unlikeArticle = (id) => request.delete(`/front/articles/${id}/like`)
 export const collectArticle = (id) => request.post(`/front/articles/${id}/collect`)
 export const uncollectArticle = (id) => request.delete(`/front/articles/${id}/collect`)
+export const checkArticleStatus = (id) => request.get(`/front/articles/${id}/status`)
 
 // 评论功能
 export const createComment = (data) => request.post('/front/comments', data)

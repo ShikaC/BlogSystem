@@ -39,6 +39,19 @@ export const useUserStore = defineStore('user', () => {
     localStorage.setItem('avatar', data.avatar || '')
     localStorage.setItem('role', data.role || '')
     localStorage.setItem('userId', data.id || '') // 存储用户ID
+    
+    // 清除旧的点赞/收藏状态（避免新用户看到前一个用户的状态）
+    clearLikeCollectStatus()
+  }
+  
+  // 清除 localStorage 中的点赞/收藏状态
+  const clearLikeCollectStatus = () => {
+    const keys = Object.keys(localStorage)
+    keys.forEach(key => {
+      if (key.startsWith('liked_') || key.startsWith('collected_')) {
+        localStorage.removeItem(key)
+      }
+    })
   }
   
   const logout = () => {
@@ -52,6 +65,9 @@ export const useUserStore = defineStore('user', () => {
     localStorage.removeItem('avatar')
     localStorage.removeItem('role')
     localStorage.removeItem('userId') // 移除用户ID
+    
+    // 清除点赞/收藏状态
+    clearLikeCollectStatus()
   }
   
   const isLoggedIn = computed(() => !!token.value)
@@ -72,5 +88,5 @@ export const useUserStore = defineStore('user', () => {
     role: role.value
   }))
   
-  return { token, nickname, avatar, role, id, setUser, logout, isLoggedIn, isAdmin, displayNickname, userInfo }
+  return { token, nickname, avatar, role, id, setUser, logout, isLoggedIn, isAdmin, displayNickname, userInfo, clearLikeCollectStatus }
 })

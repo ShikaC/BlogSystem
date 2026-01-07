@@ -60,10 +60,10 @@ public class ArticleVO {
         vo.setCoverImage(article.getCoverImage());
         vo.setStatus(article.getStatus());
         vo.setIsTop(article.getIsTop());
-        vo.setViewCount(article.getViewCount());
-        vo.setLikeCount(article.getLikeCount());
-        vo.setCollectCount(article.getCollectCount());
-        vo.setCommentCount(article.getCommentCount());
+        vo.setViewCount(article.getViewCount() != null ? article.getViewCount() : 0L);
+        vo.setLikeCount(article.getLikeCount() != null ? article.getLikeCount() : 0L);
+        vo.setCollectCount(article.getCollectCount() != null ? article.getCollectCount() : 0L);
+        vo.setCommentCount(article.getCommentCount() != null ? article.getCommentCount() : 0L);
         vo.setWordCount(article.getWordCount());
         vo.setSeoTitle(article.getSeoTitle());
         vo.setSeoKeywords(article.getSeoKeywords());

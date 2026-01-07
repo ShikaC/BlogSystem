@@ -190,6 +190,28 @@ public class FrontController {
         return Result.success();
     }
 
+    /**
+     * 获取用户对文章的状态（点赞/收藏）
+     */
+    @GetMapping("/articles/{id}/status")
+    public Result<Map<String, Boolean>> checkArticleStatus(@PathVariable Long id) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        if (username == null || "anonymousUser".equals(username)) {
+            Map<String, Boolean> emptyStatus = new java.util.HashMap<>();
+            emptyStatus.put("isLiked", false);
+            emptyStatus.put("isCollected", false);
+            return Result.success(emptyStatus);
+        }
+        UserDTO user = userService.getUserInfo(username);
+        if (user == null || user.getId() == null) {
+            Map<String, Boolean> emptyStatus = new java.util.HashMap<>();
+            emptyStatus.put("isLiked", false);
+            emptyStatus.put("isCollected", false);
+            return Result.success(emptyStatus);
+        }
+        return Result.success(articleService.checkStatus(user.getId(), id));
+    }
+
     // ==================== 分类标签 ====================
 
     /**

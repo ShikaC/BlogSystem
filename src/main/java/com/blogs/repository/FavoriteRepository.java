@@ -16,5 +16,10 @@ public interface FavoriteRepository extends JpaRepository<Favorite, Long> {
     void deleteByUserIdAndTargetIdAndType(Long userId, Long targetId, String type);
     
     long count();
+    
+    /**
+     * 统计指定文章/帖子的收藏数
+     */
+    long countByTargetIdAndType(Long targetId, String type);
 }
 

@@ -171,6 +171,26 @@ public class ArticleService {
     public ArticleVO getArticle(Long id) {
         Article article = articleRepository.findById(id)
                 .orElseThrow(() -> new BusinessException("文章不存在"));
+        
+        // 从收藏表重新计算收藏数，确保数据准确
+        long actualCollectCount = favoriteRepository.countByTargetIdAndType(id, "ARTICLE");
+        if (article.getCollectCount() == null || !article.getCollectCount().equals(actualCollectCount)) {
+            // 如果收藏数不一致，同步更新
+            article.setCollectCount(actualCollectCount);
+        }
+        
+        // 从点赞表重新计算点赞数，确保数据准确
+        long actualLikeCount = likeRecordRepository.countByTargetIdAndType(id, "ARTICLE");
+        if (article.getLikeCount() == null || !article.getLikeCount().equals(actualLikeCount)) {
+            // 如果点赞数不一致，同步更新
+            article.setLikeCount(actualLikeCount);
+        }
+        
+        // 如果有更新，保存到数据库
+        if (article.getCollectCount() != null && article.getLikeCount() != null) {
+            articleRepository.save(article);
+        }
+        
         return ArticleVO.fromEntity(article);
     }
 
@@ -577,6 +597,23 @@ public class ArticleService {
         }
         favoriteRepository.deleteByUserIdAndTargetIdAndType(sender.getId(), id, "ARTICLE");
         articleRepository.updateCollectCount(id, -1);
+    }
+
+    /**
+     * 检查用户对文章的状态（点赞/收藏）
+     */
+    public java.util.Map<String, Boolean> checkStatus(Long userId, Long articleId) {
+        if (userId == null || articleId == null) {
+            return java.util.Collections.emptyMap();
+        }
+
+        boolean isLiked = likeRecordRepository.findByUserIdAndTargetIdAndType(userId, articleId, "ARTICLE").isPresent();
+        boolean isCollected = favoriteRepository.findByUserIdAndTargetIdAndType(userId, articleId, "ARTICLE").isPresent();
+
+        java.util.Map<String, Boolean> result = new java.util.HashMap<>();
+        result.put("isLiked", isLiked);
+        result.put("isCollected", isCollected);
+        return result;
     }
 
     /**

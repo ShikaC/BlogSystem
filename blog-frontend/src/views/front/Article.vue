@@ -68,10 +68,10 @@
         <!-- 互动 -->
         <div class="article-actions">
           <el-button :type="isLiked ? 'primary' : 'default'" @click="handleLike">
-            <el-icon><Star /></el-icon> 点赞 {{ article.likeCount }}
+            <el-icon><Star /></el-icon> 点赞 {{ article.likeCount || 0 }}
           </el-button>
           <el-button :type="isCollected ? 'primary' : 'default'" @click="handleCollect">
-            <el-icon><Collection /></el-icon> 收藏 {{ article.collectCount }}
+            <el-icon><Collection /></el-icon> 收藏 {{ article.collectCount || 0 }}
           </el-button>
         </div>
 
@@ -184,7 +184,7 @@
 import { ref, onMounted, nextTick, computed, watch } from 'vue'
 
 import { useRoute, useRouter } from 'vue-router'
-import { getArticle, getRelatedArticles, getArticleComments, likeArticle, unlikeArticle, collectArticle, uncollectArticle, createComment, deleteComment as deleteCommentApi } from '@/api/front'
+import { getArticle, getRelatedArticles, getArticleComments, likeArticle, unlikeArticle, collectArticle, uncollectArticle, createComment, deleteComment as deleteCommentApi, checkArticleStatus } from '@/api/front'
 import { deleteArticle } from '@/api/admin'
 import { useUserStore } from '@/stores/user'
 import { Calendar, View, Folder, Timer, Star, Collection, Delete, Edit } from '@element-plus/icons-vue'
@@ -242,34 +242,48 @@ const formatDate = (dateStr) => {
 }
 
 const handleLike = async () => {
+  if (!userStore.isLoggedIn) {
+    ElMessage.warning('请先登录')
+    return
+  }
   try {
     if (isLiked.value) {
       await unlikeArticle(article.value.id)
-      article.value.likeCount--
+      const currentCount = article.value.likeCount || 0
+      article.value.likeCount = Math.max(0, currentCount - 1)
+      isLiked.value = false
     } else {
       await likeArticle(article.value.id)
-      article.value.likeCount++
+      const currentCount = article.value.likeCount || 0
+      article.value.likeCount = currentCount + 1
+      isLiked.value = true
     }
-    isLiked.value = !isLiked.value
-    localStorage.setItem(`liked_${article.value.id}`, isLiked.value)
   } catch (e) {
     console.error(e)
+    ElMessage.error('操作失败，请稍后重试')
   }
 }
 
 const handleCollect = async () => {
+  if (!userStore.isLoggedIn) {
+    ElMessage.warning('请先登录')
+    return
+  }
   try {
     if (isCollected.value) {
       await uncollectArticle(article.value.id)
-      article.value.collectCount--
+      const currentCount = article.value.collectCount || 0
+      article.value.collectCount = Math.max(0, currentCount - 1)
+      isCollected.value = false
     } else {
       await collectArticle(article.value.id)
-      article.value.collectCount++
+      const currentCount = article.value.collectCount || 0
+      article.value.collectCount = currentCount + 1
+      isCollected.value = true
     }
-    isCollected.value = !isCollected.value
-    localStorage.setItem(`collected_${article.value.id}`, isCollected.value)
   } catch (e) {
     console.error(e)
+    ElMessage.error('操作失败，请稍后重试')
   }
 }
 
@@ -396,9 +410,22 @@ const loadArticle = async () => {
 
     article.value = res.data
     
-    // 检查本地缓存的点赞收藏状态
-    isLiked.value = localStorage.getItem(`liked_${article.value.id}`) === 'true'
-    isCollected.value = localStorage.getItem(`collected_${article.value.id}`) === 'true'
+    // 从后端获取用户对文章的点赞/收藏状态
+    if (userStore.isLoggedIn) {
+      try {
+        const statusRes = await checkArticleStatus(id)
+        isLiked.value = statusRes.data.isLiked || false
+        isCollected.value = statusRes.data.isCollected || false
+      } catch (e) {
+        console.error('加载状态失败:', e)
+        isLiked.value = false
+        isCollected.value = false
+      }
+    } else {
+      // 未登录用户默认未点赞/收藏
+      isLiked.value = false
+      isCollected.value = false
+    }
     
     generateToc()
     

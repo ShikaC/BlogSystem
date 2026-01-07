@@ -50,7 +50,7 @@ public class SearchService {
         if (size == null || size < 1) size = 10;
 
         String type = contentType != null ? contentType.trim().toUpperCase(Locale.ROOT) : null;
-        
+
         // 排序方式：relevance(相关度), time(发布时间), views(阅读量)
         Sort sort;
         if ("views".equalsIgnoreCase(sortBy)) {
@@ -157,11 +157,10 @@ public class SearchService {
 
     /**
      * 获取热门搜索词（简单实现：返回空列表，后续可扩展）
+     * @param limit 返回数量
+     * @param days 统计时间范围（天数，null或0表示全部）
      */
-    public List<String> getHotKeywords(int limit) {
-        // TODO: 可以基于搜索日志统计热门关键词
+    public List<String> getHotKeywords(int limit, Integer days) {
         return List.of();
     }
 }
-
-

@@ -1,9 +1,7 @@
 package com.blogs.controller.front;
 
-import com.blogs.common.PageResult;
-import com.blogs.common.Result;
-import com.blogs.dto.SearchResultVO;
-import com.blogs.service.SearchService;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -55,5 +53,3 @@ public class SearchController {
         return Result.success(searchService.getHotKeywords(limit, days));
     }
 }
-
-

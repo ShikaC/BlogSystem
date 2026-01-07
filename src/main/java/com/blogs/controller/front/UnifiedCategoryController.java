@@ -28,5 +28,3 @@ public class UnifiedCategoryController {
         return Result.success(unifiedCategoryService.getAll(type));
     }
 }
-
-

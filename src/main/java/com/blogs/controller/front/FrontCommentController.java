@@ -4,7 +4,6 @@ import com.blogs.common.Result;
 import com.blogs.dto.CommentRequest;
 import com.blogs.dto.CommentVO;
 import com.blogs.exception.BusinessException;
-
 import com.blogs.service.CommentService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -24,9 +23,6 @@ public class FrontCommentController {
 
     @Autowired
     private com.blogs.service.UserService userService;
-
-    // @Autowired
-    // private CaptchaService captchaService;
 
     /**
      * 发表评论
